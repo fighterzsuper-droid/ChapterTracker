@@ -19,7 +19,7 @@ If you want your friend to access the site online, deploy it to a Node-friendly 
 
 1. Push this repo to GitHub.
 2. Create a **Web Service** on Render and connect the repo.
-3. Set the build command to `npm install` and the start command to `npm start`.
+3. If Render asks for a Dockerfile, this repo includes one at the root.
 4. Deploy, then share the generated URL with your friend.
 
 ### Railway (free tier)
