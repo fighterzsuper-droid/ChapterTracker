@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Share Vault</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <header class="hero">
+        <p class="eyebrow">Private Video Vault</p>
+        <h1>Share high-quality video uploads in a single place.</h1>
+        <p class="lede">
+          Upload original files with no compression. Your friend can download the
+          same high-quality file whenever needed.
+        </p>
+      </header>
+
+      <section class="card">
+        <h2>Upload a new video</h2>
+        <form id="uploadForm">
+          <label for="video">Choose a video file</label>
+          <input id="video" name="video" type="file" accept="video/*" required />
+          <button type="submit">Upload video</button>
+          <p id="status" class="status" role="status"></p>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Available downloads</h2>
+          <button id="refresh">Refresh list</button>
+        </div>
+        <div id="emptyState" class="empty">
+          <p>No uploads yet. Add one above to share it.</p>
+        </div>
+        <ul id="fileList" class="file-list"></ul>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
