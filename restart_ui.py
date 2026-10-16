@@ -20,8 +20,6 @@ def restart_page():
         return render_template_string(PAGE,message=message,enabled=enabled)
     if not enabled or not hmac.compare_digest(request.form.get("password",""),password):
         return render_template_string(PAGE,message="Not configured or incorrect password.",enabled=enabled),403
-    if not deployment.startswith("dep_"):
-        return render_template_string(PAGE,message="Deployment ID must start with dep_.",enabled=enabled),400
     url="https://bot-hosting.net/api/v1/deployments/"+deployment+"/power"
     payload=json.dumps({"action":"restart","waitSeconds":1}).encode()
     req=Request(url,data=payload,headers={"Authorization":"Bearer "+key,"Content-Type":"application/json"},method="POST")
