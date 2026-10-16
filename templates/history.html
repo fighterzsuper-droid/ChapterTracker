@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block heading %}Assessment History{% endblock %}
+{% block subheading %}Every recorded attempt stays here for review.{% endblock %}
+{% block content %}
+<section class="card">
+{% if attempts %}
+<div class="table-wrap">
+<table>
+<thead><tr><th>Date</th><th>Assessment</th><th>Chapter</th><th>Score</th><th>Status</th></tr></thead>
+<tbody>
+{% for a in attempts %}
+<tr>
+<td>{{ a.submitted_at[:10] }}</td>
+<td><a href="{{ url_for('attempt_result', attempt_id=a.id) }}">{{ a.title }}</a></td>
+<td>{{ a.chapter }}</td>
+<td>{% if a.total_score is not none %}{{ a.total_score|round(1) }}/{{ a.max_marks|round(1) }} ({{ ((a.total_score/a.max_marks)*100)|round(1) }}%){% else %}Pending written marking{% endif %}</td>
+<td>{{ a.status }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<div class="empty">No attempts yet.</div>
+{% endif %}
+</section>
+{% endblock %}
