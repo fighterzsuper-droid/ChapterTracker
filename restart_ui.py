@@ -2,6 +2,7 @@ import os
 import hmac
 import json
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 from flask import Blueprint, request, render_template_string
 
 restart_ui = Blueprint("restart_ui", __name__)
@@ -28,6 +29,11 @@ def restart_page():
         with urlopen(req,timeout=15) as response:
             result=json.load(response)
         message="Restart requested. Check hosting logs for successful startup." if result.get("ok") else "Restart request was not accepted."
-    except Exception:
-        message="Could not confirm restart. Check the hosting console before retrying."
+    except HTTPError as exc:
+        hints={400:"Invalid request or deployment ID.",401:"API key rejected.",403:"API key lacks power permission or deployment access.",404:"Deployment not found.",429:"Rate limit reached."}
+        message="Bot-Hosting HTTP "+str(exc.code)+": "+hints.get(exc.code,"Check API configuration.")
+    except (URLError, TimeoutError):
+        message="Connection failed or timed out. Check the hosting console before retrying."
+    except (ValueError, OSError):
+        message="Unexpected API response. Check hosting console before retrying."
     return render_template_string(PAGE,message=message,enabled=enabled)
