@@ -20,6 +20,7 @@
       <a class="{{ 'active' if request.endpoint in ['tests','take_test'] else '' }}" href="{{ url_for('tests') }}">Tests</a>
       <a class="{{ 'active' if request.endpoint == 'weaknesses' else '' }}" href="{{ url_for('weaknesses') }}">Weaknesses</a>
       <a class="{{ 'active' if request.endpoint in ['attempts','attempt_result'] else '' }}" href="{{ url_for('attempts') }}">Assessment History</a>
+      <a href="https://bot-hosting.net/dashboard" target="_blank" rel="noopener noreferrer" title="Open Bot-Hosting to restart the deployment">Restart Hosting ↗</a>
     </nav>
     <div class="sidebar-foot">Jayakiran • AA/F8<br>Progress is not complete until retested and applied.</div>
   </aside>
