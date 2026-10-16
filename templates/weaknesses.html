@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block heading %}Weaknesses{% endblock %}
+{% block subheading %}A weakness stays open until it has been successfully retested.{% endblock %}
+{% block content %}
+<div class="weak-grid">
+{% for w in weaknesses %}
+<article class="card weakness-card">
+<div class="card-head">
+<span class="eyebrow">CHAPTER {{ w.chapter }}</span>
+<span class="chip {{ 'progress' if w.status.startswith('Open') else 'yes' }}">{{ w.status }}</span>
+</div>
+<h2>{{ w.title }}</h2>
+<p class="muted">{{ w.details }}</p>
+{% if w.weakness_tag %}<code>{{ w.weakness_tag }}</code>{% endif %}
+</article>
+{% endfor %}
+</div>
+{% endblock %}
