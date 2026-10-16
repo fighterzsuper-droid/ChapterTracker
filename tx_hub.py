@@ -42,21 +42,26 @@ def initialize():
         for code,name in TOPICS:
             c.execute("INSERT OR IGNORE INTO topics(code,title,notes_created,status) VALUES(?,?,?,?)",(code,name,1 if code in ('1A','1B','1C','1D','1E') else 0,"Notes available" if code in ('1A','1B','1C','1D','1E') else "Not Started"))
 initialize()
-STYLE="""<style>.txwrap{max-width:1060px;margin:auto;padding:24px;font:16px system-ui;color:#e9eff8;background:#101a2a;min-height:100vh}.txwrap a{color:#8dd8ff}.txwrap .panel{padding:20px;margin:14px 0;background:#1b2a40;border:1px solid #34445a;border-radius:12px}.txwrap table{width:100%;border-collapse:collapse}.txwrap td,.txwrap th{padding:12px;border-bottom:1px solid #3b4b60;text-align:left}.txwrap nav a{margin-right:18px}.txwrap button{background:#7ad0ff;border:0;padding:12px 20px;border-radius:9px;cursor:pointer}.txwrap label{display:block;margin:12px 0}</style>"""
-def page(title,content):
-    return render_template_string('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ title }}</title></head><body style="margin:0;background:#101a2a">'+STYLE+'<div class="txwrap"><nav><a href="/">AA / F8</a><a href="/tx/">TX / F6</a><a href="/tx/topics">TX Topics</a><a href="/tx/quiz">TX Quiz</a><a href="/tx/history">TX History</a><a href="/tx/weaknesses">TX Weaknesses</a></nav><div style="display:flex;gap:10px;justify-content:flex-end;align-items:center;margin:18px 0"><label for="subject-switch">Subject</label><select id="subject-switch" onchange="location.href=this.value" style="padding:10px;background:#253951;color:white;border-radius:8px"><option value="/">AA / F8</option><option value="/tx/" selected>TX / F6</option></select><a href="/admin/restart">Restart hosting</a></div><h1>{{title}}</h1>'+content+'</div></body></html>',title=title)
+def page(title, content):
+    shell = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ title }} — Jay's Exam Hub</title><link rel="stylesheet" href="/static/style.css"></head><body>
+    <div class="shell"><aside class="sidebar"><div class="brand"><div class="brand-mark">TX</div><div><strong>Jay's Exam Hub</strong><span>ACCA Taxation • TX / F6</span></div></div>
+    <nav><a class="{{ 'active' if path == '/tx/' else '' }}" href="/tx/">Dashboard</a><a class="{{ 'active' if path == '/tx/topics' else '' }}" href="/tx/topics">Chapters</a><a class="{{ 'active' if path == '/tx/quiz' else '' }}" href="/tx/quiz">Tests</a><a class="{{ 'active' if path == '/tx/weaknesses' else '' }}" href="/tx/weaknesses">Weaknesses</a><a class="{{ 'active' if path == '/tx/history' else '' }}" href="/tx/history">Assessment History</a></nav><div class="sidebar-foot">Jaykiran • TX/F6<br>Progress is not complete until retested and applied.</div></aside>
+    <main><header class="topbar"><div><h1>{{ title }}</h1><p>Exam-focused study, testing and weakness tracking.</p></div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:auto"><label for="subject-switch" style="font-size:13px">Subject</label><select id="subject-switch" onchange="location.href=this.value" style="padding:10px 14px;border-radius:10px;border:1px solid #58708c;background:#1b2a40;color:white"><option value="/">AA / F8</option><option value="/tx/" selected>TX / F6</option></select><a href="/admin/restart" class="button ghost">Restart hosting</a></div></header>
+    {{ content|safe }}</main></div></body></html>"""
+    return render_template_string(shell, title=title, content=content, path=request.path)
 @tx.get("/")
 def home():
     with connect() as c:
         rows=c.execute("SELECT * FROM topics").fetchall()
         attempts=c.execute("SELECT COUNT(*) FROM attempts").fetchone()[0]
         weaknesses=c.execute("SELECT COUNT(*) FROM weaknesses WHERE status LIKE 'Open%'").fetchone()[0]
-    return page("ACCA TX / F6 — Jaykiran",'<div class="panel"><h2>Taxation (TX-UK), FA2025</h2><p>Separate from AA. Notes for Parts 1A–1E are available; none is marked complete until tested, corrected and successfully retested where necessary.</p><p>Topics: '+str(len(rows))+' | Submitted TX attempts: '+str(attempts)+' | Open TX weaknesses: '+str(weaknesses)+'</p><p><a href="/tx/topics">View full TX syllabus roadmap</a> · <a href="/tx/quiz">Take the 1A diagnostic</a></p></div>')
+    return page("ACCA TX / F6 — Jaykiran",'<div class="card"><span class="eyebrow">TAXATION • FA2025</span><h2>Taxation (TX-UK), FA2025</h2><p>Separate from AA. Notes for Parts 1A–1E are available; none is marked complete until tested, corrected and successfully retested where necessary.</p><p>Topics: '+str(len(rows))+' | Submitted TX attempts: '+str(attempts)+' | Open TX weaknesses: '+str(weaknesses)+'</p><p><a href="/tx/topics">View full TX syllabus roadmap</a> · <a href="/tx/quiz">Take the 1A diagnostic</a></p></div>')
 @tx.get("/topics")
 def topics():
     with connect() as c: rows=c.execute("SELECT * FROM topics").fetchall()
     trs=''.join('<tr><td>'+r['code']+'</td><td>'+r['title']+'</td><td>'+r['status']+'</td></tr>' for r in rows)
-    return page("TX Topic Progress",'<div class="panel"><p>Notes available is not equivalent to topic completion.</p><table><tr><th>Part</th><th>Topic</th><th>Status</th></tr>'+trs+'</table></div>')
+    return page("TX Topic Progress",'<div class="card"><p class="muted">Notes available is not equivalent to topic completion.</p><table><tr><th>Part</th><th>Topic</th><th>Status</th></tr>'+trs+'</table></div>')
 QUESTIONS=[
 ("Employment £30,000, property £4,000, bank interest £2,000 and dividends £1,000. What is non-savings income?",["£30,000","£34,000","£36,000","£37,000"],1,"income classification"),
 ("A taxpayer receives £25,000 employment income, £1,500 bank interest and £500 dividends. What is total income?",["£25,000","£26,500","£27,000","£27,500"],2,"total income"),
@@ -75,16 +80,16 @@ def quiz():
             for i,p in enumerate(picks):
                 if p!=str(QUESTIONS[i][2]):
                     c.execute("INSERT INTO weaknesses(topic,category,details) VALUES(?,?,?)",("1A","Technical / interpretation",QUESTIONS[i][3]+": "+QUESTIONS[i][0]))
-        return page("TX 1A Diagnostic Result",'<div class="panel"><h2>Score: '+str(score)+'/8</h2><p>Incorrect responses are logged as open weaknesses. A later successful retest is required before resolving them. This diagnostic alone does not complete the topic.</p><a href="/tx/quiz">Try again</a> · <a href="/tx/weaknesses">Review weaknesses</a></div>')
+        return page("TX 1A Diagnostic Result",'<div class="card"><h2>Score: '+str(score)+'/8</h2><p>Incorrect responses are logged as open weaknesses. A later successful retest is required before resolving them. This diagnostic alone does not complete the topic.</p><a href="/tx/quiz">Try again</a> · <a href="/tx/weaknesses">Review weaknesses</a></div>')
     parts=[]
     for i,(prompt,opts,_,_) in enumerate(QUESTIONS):
-        parts.append('<div class="panel"><h3>Question '+str(i+1)+' (2 marks)</h3><p>'+prompt+'</p>'+''.join('<label><input type="radio" name="q'+str(i)+'" value="'+str(j)+'" required> '+opt+'</label>' for j,opt in enumerate(opts))+'</div>')
+        parts.append('<div class="card question"><h3>Question '+str(i+1)+' (2 marks)</h3><p>'+prompt+'</p>'+''.join('<label><input type="radio" name="q'+str(i)+'" value="'+str(j)+'" required> '+opt+'</label>' for j,opt in enumerate(opts))+'</div>')
     return page("TX Part 1A — Diagnostic Quiz",'<p>Four short foundation questions. More demanding scenario-based assessments will follow.</p><form method="post">'+''.join(parts)+'<button type="submit">Submit answers</button></form>')
 @tx.get("/history")
 def history():
     with connect() as c: rows=c.execute("SELECT * FROM attempts ORDER BY id DESC").fetchall()
-    return page("TX Assessment History",'<div class="panel">'+(''.join('<p>Part '+r['topic']+' — '+str(r['score'])+'/'+str(r['max_marks'])+' — '+r['submitted_at']+'</p>' for r in rows) or 'No TX assessments submitted yet.')+'</div>')
+    return page("TX Assessment History",'<div class="card">'+(''.join('<p>Part '+r['topic']+' — '+str(r['score'])+'/'+str(r['max_marks'])+' — '+r['submitted_at']+'</p>' for r in rows) or 'No TX assessments submitted yet.')+'</div>')
 @tx.get("/weaknesses")
 def weaknesses():
     with connect() as c: rows=c.execute("SELECT * FROM weaknesses ORDER BY id DESC").fetchall()
-    return page("TX Weakness Log",'<div class="panel">'+(''.join('<p><b>'+r['topic']+' — '+r['category']+'</b><br>'+r['details']+'<br>'+r['status']+'</p>' for r in rows) or 'No TX weaknesses logged yet.')+'</div>')
+    return page("TX Weakness Log",'<div class="card">'+(''.join('<p><b>'+r['topic']+' — '+r['category']+'</b><br>'+r['details']+'<br>'+r['status']+'</p>' for r in rows) or 'No TX weaknesses logged yet.')+'</div>')
