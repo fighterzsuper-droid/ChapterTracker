@@ -471,6 +471,9 @@ def not_found(_):
 
 init_db()
 
+from tx_hub import tx
+app.register_blueprint(tx)
+
 if __name__ == "__main__":
     port = int(os.getenv("SERVER_PORT", os.getenv("PORT", "5000")))
     app.run(host="0.0.0.0", port=port, debug=False)
