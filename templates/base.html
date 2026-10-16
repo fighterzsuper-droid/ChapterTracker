@@ -14,6 +14,7 @@
       <div><strong>Jay's Exam Hub</strong><span>ACCA Audit & Assurance</span></div>
     </div>
     <nav>
+      <div style="display:flex;gap:8px;margin-bottom:18px;padding:8px;border:1px solid #4b617c;border-radius:12px"><a href="/" style="flex:1;text-align:center;font-weight:700">AA / F8</a><a href="/tx/" style="flex:1;text-align:center;font-weight:700">TX / F6</a></div>
       <a class="{{ 'active' if request.endpoint == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}">Dashboard</a>
       <a class="{{ 'active' if request.endpoint == 'chapters' else '' }}" href="{{ url_for('chapters') }}">Chapters</a>
       <a class="{{ 'active' if request.endpoint in ['tests','take_test'] else '' }}" href="{{ url_for('tests') }}">Tests</a>
