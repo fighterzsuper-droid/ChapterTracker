@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block heading %}Page not found{% endblock %}
+{% block subheading %}That page does not exist in Jay's AA Exam Hub.{% endblock %}
+{% block content %}
+<a class="button" href="{{ url_for('dashboard') }}">Return to dashboard</a>
+{% endblock %}
