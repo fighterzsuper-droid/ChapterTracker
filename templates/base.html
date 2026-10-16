@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}{{ app_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">AA</div>
+      <div><strong>Jay's Exam Hub</strong><span>ACCA Audit & Assurance</span></div>
+    </div>
+    <nav>
+      <a class="{{ 'active' if request.endpoint == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a class="{{ 'active' if request.endpoint == 'chapters' else '' }}" href="{{ url_for('chapters') }}">Chapters</a>
+      <a class="{{ 'active' if request.endpoint in ['tests','take_test'] else '' }}" href="{{ url_for('tests') }}">Tests</a>
+      <a class="{{ 'active' if request.endpoint == 'weaknesses' else '' }}" href="{{ url_for('weaknesses') }}">Weaknesses</a>
+      <a class="{{ 'active' if request.endpoint in ['attempts','attempt_result'] else '' }}" href="{{ url_for('attempts') }}">Assessment History</a>
+    </nav>
+    <div class="sidebar-foot">Jayakiran • AA/F8<br>Progress is not complete until retested and applied.</div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <div>
+        <h1>{% block heading %}{{ app_name }}{% endblock %}</h1>
+        <p>{% block subheading %}Exam-focused study, testing and weakness tracking.{% endblock %}</p>
+      </div>
+      <span class="live-badge"><i></i> LIVE STUDY HUB</span>
+    </header>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script>
+document.querySelectorAll("[data-confirm-submit]").forEach(function(form){
+  form.addEventListener("submit", function(e){
+    const unanswered=[];
+    form.querySelectorAll("[data-question]").forEach(function(q){
+      const type=q.dataset.type;
+      const filled=type==="mcq"?q.querySelector("input[type=radio]:checked"):(q.querySelector("textarea")&&q.querySelector("textarea").value.trim().length);
+      if(!filled) unanswered.push(q.dataset.question);
+    });
+    if(unanswered.length&&!confirm(unanswered.length+" question(s) are unanswered. Submit anyway?")) e.preventDefault();
+  });
+});
+</script>
+</body>
+</html>
