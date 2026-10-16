@@ -473,6 +473,8 @@ init_db()
 
 from tx_hub import tx
 app.register_blueprint(tx)
+from restart_ui import restart_ui
+app.register_blueprint(restart_ui)
 
 if __name__ == "__main__":
     port = int(os.getenv("SERVER_PORT", os.getenv("PORT", "5000")))
