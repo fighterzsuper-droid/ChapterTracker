@@ -313,3 +313,61 @@ def update_workbook(workbook_id):
 
 
 init_board()
+
+
+@board.post("/api/study-board/notes")
+def create_note():
+    """Create a private, editable chapter note (plain UTF-8 Markdown)."""
+    require_same_site()
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return jsonify({"error": "JSON expected"}), 400
+    subject, chapter = context(payload)
+    title = str(payload.get("name", "My notes")).strip()[:FILE_NAME_MAX] or "My notes"
+    content = str(payload.get("text", ""))
+    encoded = content.encode("utf-8")
+    if len(encoded) > MAX_UPLOAD:
+        return jsonify({"error": "Note exceeds storage limit"}), 413
+    identifier = uuid.uuid4().hex
+    stored_name = identifier + ".md"
+    path = STORE / "documents" / stored_name
+    with open(path, "xb") as output:
+        output.write(encoded)
+    try:
+        with connect() as con:
+            con.execute(
+                """INSERT INTO board_documents
+                (id,subject,chapter,display_name,original_name,stored_name,mime,file_bytes,created_at)
+                VALUES(?,?,?,?,?,?,?,?,?)""",
+                (identifier, subject, chapter, title, title + ".md", stored_name,
+                 FORMATS[".md"], len(encoded), now()),
+            )
+            row = con.execute("SELECT * FROM board_documents WHERE id=?", (identifier,)).fetchone()
+        return jsonify({"document": api_document(row)}), 201
+    except Exception:
+        path.unlink(missing_ok=True)
+        raise
+
+
+@board.put("/api/study-board/notes/<document_id>")
+def save_note(document_id):
+    require_same_site()
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict) or not isinstance(payload.get("text"), str):
+        return jsonify({"error": "Text content expected"}), 400
+    content = payload["text"].encode("utf-8")
+    if len(content) > MAX_UPLOAD:
+        return jsonify({"error": "Note exceeds storage limit"}), 413
+    with connect() as con:
+        row = con.execute("SELECT * FROM board_documents WHERE id=?", (document_id,)).fetchone()
+        if not row or not row["stored_name"].endswith((".md", ".txt")):
+            abort(404)
+        destination = STORE / "documents" / row["stored_name"]
+        temp = STORE / "documents" / (uuid.uuid4().hex + ".tmp")
+        try:
+            temp.write_bytes(content)
+            os.replace(temp, destination)
+        finally:
+            temp.unlink(missing_ok=True)
+        con.execute("UPDATE board_documents SET file_bytes=? WHERE id=?", (len(content), document_id))
+    return jsonify({"saved": True, "bytes": len(content)})
