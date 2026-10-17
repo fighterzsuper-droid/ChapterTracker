@@ -55,7 +55,7 @@ def page(title, content):
     <nav><a class="{{ 'active' if path == '/tx/' else '' }}" href="/tx/">Dashboard</a><a class="{{ 'active' if path == '/tx/topics' else '' }}" href="/tx/topics">Chapters</a><a class="{{ 'active' if path == '/tx/quiz' else '' }}" href="/tx/quiz">Tests</a><a class="{{ 'active' if path == '/tx/weaknesses' else '' }}" href="/tx/weaknesses">Weaknesses</a><a class="{{ 'active' if path == '/tx/history' else '' }}" href="/tx/history">Assessment History</a><a href="/tx/goals">Goals & To-do</a></nav><div class="sidebar-foot">Jaykiran • TX/F6<br>Progress is not complete until retested and applied.</div></aside>
     <main><header class="topbar"><div><h1>{{ title }}</h1><p>Exam-focused study, testing and weakness tracking.</p></div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:auto"><label for="subject-switch" style="font-size:13px">Subject</label><select id="subject-switch" onchange="location.href=this.value" style="padding:10px 14px;border-radius:10px;border:1px solid #58708c;background:#1b2a40;color:white"><option value="/">AA / F8</option><option value="/tx/" selected>TX / F6</option></select><a href="/admin/restart" class="button ghost">Restart hosting</a></div></header>
-    {{ content|safe }}</main></div></body></html>"""
+    {{ content|safe }}</main></div><script src="/static/study_time.js" defer></script></body></html>"""
     return render_template_string(shell, title=title, content=content, path=request.path)
 @tx.get("/")
 def home():
