@@ -1,7 +1,7 @@
 # Jay Study Hub — Rebuild Requirements (Authoritative Draft)
 
 Last updated: 2026-10-17
-Status: REQUIREMENTS COLLECTION — not approval to delete production data or deploy.
+Status: CLEAN REBUILD FILES PREPARED AND TESTED IN PR #3 — not deployed; live data backups still required.
 Owner: Jayakiran (Jay). This is **Jay's project only**; do not mix it up with his brother's separate project, files, grades or study records.
 
 ## Confirmed by Jay — preserve these instructions
@@ -67,4 +67,5 @@ Owner: Jayakiran (Jay). This is **Jay's project only**; do not mix it up with hi
 - Any authentication/privacy preferences (recommended for a secure private dashboard).
 
 ## Change log
+- 2026-10-17: User authorised preparing all clean Study Hub files. Complete project source, password login, persistent AA/TX/time storage, Kuwait Self Overview, deployment manifest, host audit, SQLite backup utility and test suite staged in PR #3. Live Bot-Hosting files and databases untouched.
 - 2026-10-17: Initial durable rebuild brief created based on Jay's requests in this chat. No host deletion authorised or executed.
