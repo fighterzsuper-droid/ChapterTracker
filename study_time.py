@@ -6,7 +6,7 @@ reading a page without interacting continues to count while it is foregrounded.
 import re
 import sqlite3
 import time
-from datetime import date, datetime, timedelta, time as clock_time
+from datetime import datetime, timedelta, time as clock_time, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -14,7 +14,11 @@ from flask import Blueprint, jsonify, request
 
 study_time = Blueprint("study_time", __name__, url_prefix="/api/study-time")
 DB = Path(__file__).resolve().parent / "study_time.db"
-ZONE = ZoneInfo("Asia/Kuwait")
+try:
+    ZONE = ZoneInfo("Asia/Kuwait")
+except Exception:
+    # Kuwait has a fixed UTC+03:00 offset (no daylight-saving clock changes).
+    ZONE = timezone(timedelta(hours=3))
 MAX_HEARTBEAT_GAP = 16.0  # Clients heartbeat every 10s; long/sleep gaps earn zero.
 TOKEN_PATTERN = re.compile(r"^[a-f0-9]{32}$")
 SUBJECTS = {"AA", "TX"}
@@ -35,6 +39,13 @@ def initialize():
                 seconds REAL NOT NULL DEFAULT 0,
                 PRIMARY KEY (subject, day)
             );
+            CREATE TABLE IF NOT EXISTS study_hour (
+                subject TEXT NOT NULL,
+                day TEXT NOT NULL,
+                hour INTEGER NOT NULL CHECK(hour BETWEEN 0 AND 23),
+                seconds REAL NOT NULL DEFAULT 0,
+                PRIMARY KEY(subject, day, hour)
+            );
             CREATE TABLE IF NOT EXISTS study_lease (
                 id INTEGER PRIMARY KEY CHECK (id = 1),
                 tab_id TEXT NOT NULL,
@@ -50,19 +61,29 @@ def initialize():
 
 
 def add_seconds(db, subject, first, last):
-    """Split credited intervals at local midnight; never use browser-supplied time."""
+    """Persist verified time in both local-day and local-hour buckets.
+
+    Split each interval at Kuwait clock-hour boundaries, so charts and totals
+    agree even when studying across 11:59 PM / midnight.
+    """
     while first < last:
         local = datetime.fromtimestamp(first, ZONE)
-        day = local.date()
-        midnight = datetime.combine(day + timedelta(days=1), clock_time.min, tzinfo=ZONE).timestamp()
-        end = min(last, midnight)
+        hour_start = local.replace(minute=0, second=0, microsecond=0)
+        next_hour = (hour_start + timedelta(hours=1)).timestamp()
+        end = min(last, next_hour)
         seconds = end - first
         if seconds <= 0:
             break
+        day = local.date().isoformat()
         db.execute(
             """INSERT INTO study_day(subject,day,seconds) VALUES (?,?,?)
                ON CONFLICT(subject,day) DO UPDATE SET seconds = seconds + excluded.seconds""",
-            (subject, day.isoformat(), seconds),
+            (subject, day, seconds),
+        )
+        db.execute(
+            """INSERT INTO study_hour(subject,day,hour,seconds) VALUES (?,?,?,?)
+               ON CONFLICT(subject,day,hour) DO UPDATE SET seconds = seconds + excluded.seconds""",
+            (subject, day, local.hour, seconds),
         )
         first = end
 
