@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from pathlib import Path
 from datetime import datetime, timezone
@@ -5,7 +6,7 @@ from html import escape
 from flask import Blueprint, render_template_string, request, redirect, url_for, flash, abort
 
 tx = Blueprint("tx", __name__, url_prefix="/tx")
-DB = Path(__file__).resolve().parent / "tx_hub.db"
+DB = Path(os.getenv("TX_DB_PATH", str(Path(__file__).resolve().parent / "tx_hub.db")))
 TOPICS = [
 ("1A","Income tax computation and classification"),
 ("1B","Personal Allowance and adjusted net income"),
@@ -39,6 +40,7 @@ def connect():
     c.row_factory=sqlite3.Row
     return c
 def initialize():
+    DB.parent.mkdir(parents=True, exist_ok=True)
     with connect() as c:
         c.executescript("""
         CREATE TABLE IF NOT EXISTS topics (code TEXT PRIMARY KEY, title TEXT NOT NULL, notes_created INTEGER NOT NULL DEFAULT 0, taught INTEGER NOT NULL DEFAULT 0, tested INTEGER NOT NULL DEFAULT 0, marked INTEGER NOT NULL DEFAULT 0, corrected INTEGER NOT NULL DEFAULT 0, retested INTEGER NOT NULL DEFAULT 0, applied INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'Not Started', latest_mark REAL);
