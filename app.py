@@ -1,7 +1,8 @@
 import json
 import os
+import secrets
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
@@ -10,7 +11,15 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.getenv("AA_DB_PATH", str(BASE_DIR / "aa_hub.db")))
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "jay-aa-local-secret-change-me")
+# Sessions are secret even when an operator has not yet configured the key.
+# Set a permanent FLASK_SECRET_KEY in the Bot-Hosting environment before launch.
+app.secret_key = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(32)
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=os.getenv("HUB_ALLOW_HTTP") != "1",
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7),
+)
 
 CHAPTERS = [
     "Introduction to Assurance",
@@ -482,6 +491,8 @@ from study_time import study_time
 app.register_blueprint(study_time)
 from watcher import watcher
 app.register_blueprint(watcher)
+from security import auth
+app.register_blueprint(auth)
 from restart_ui import restart_ui
 app.register_blueprint(restart_ui)
 
