@@ -31,7 +31,7 @@ with sync_playwright() as p:
             if page.locator("#board-sheet-editor").evaluate("(el) => el.children.length > 0"):
                 success = True
                 break
-        if "failed" in message.lower() or "error" in message.lower():
+        if "failed" in message.lower() or "error" in message.lower() or "[redi]" in message.lower():
             break
     print("Page errors:", errors[:12])
     print("Sheet status:", message)
