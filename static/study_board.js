@@ -546,10 +546,8 @@
     chapterOptions();
     el("board-subject").value = subject;
     wire();
-    const mod = await import("/static/pdf_viewer.js");
-    pdf = new mod.StudyPDF(el("board-pdf-scroll"), text => {
-      el("board-pdf-message").textContent = text;
-    });
+    // PDF.js is loaded lazily when a PDF is selected. The spreadsheet and
+    // private library still work if the PDF CDN is temporarily unavailable.
     await refreshLists();
     try {
       initEditor();
