@@ -13,3 +13,18 @@ main{padding:32px;max-width:1280px;width:100%;margin:0 auto}.topbar{display:flex
 .tx-goal-form{display:flex;flex-wrap:wrap;gap:12px;align-items:center}.tx-goal-form input{padding:12px;border:1px solid var(--line);background:#0c1528;color:var(--text);border-radius:10px;font:inherit;min-width:210px;flex:1}
 .tx-task-list{display:grid;gap:12px;margin:14px 0}.tx-task{display:flex;justify-content:space-between;gap:18px;align-items:center}.tx-task h2{margin:6px 0}.tx-task-actions{display:flex;flex-wrap:wrap;gap:6px}.tx-task-actions form{margin:0}
 @media(max-width:680px){.tx-task{flex-direction:column;align-items:flex-start}.tx-goal-form input{width:100%}}
+
+
+/* Automatic, conservative foreground-tab study clock. */
+.study-clock{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:18px;border:1px solid var(--line);border-radius:14px;background:rgba(18,30,53,.82);padding:13px 17px;margin:-5px 0 18px}
+.study-clock-label{display:flex;align-items:center;gap:11px}
+.study-clock-label strong{font-size:13px}
+.study-clock-label small{color:var(--muted);font-weight:400}
+.study-clock-label .study-clock-status{display:block;margin-top:4px;color:var(--muted);font-size:11px}
+.study-dot{display:block;width:9px;height:9px;flex:none;background:#7184a6;border-radius:50%;box-shadow:0 0 0 4px rgba(113,132,166,.14)}
+.study-dot.counting{background:var(--green);box-shadow:0 0 0 4px rgba(47,209,139,.12)}
+.study-clock-numbers{display:flex;gap:20px;flex-wrap:wrap}
+.study-clock-numbers div{min-width:88px}
+.study-clock-numbers span{display:block;color:var(--muted);font-size:10px;margin-bottom:3px}
+.study-clock-numbers strong{font-size:16px;font-variant-numeric:tabular-nums}
+@media(max-width:680px){.study-clock-numbers{width:100%;justify-content:space-between;gap:10px}.study-clock-numbers div{min-width:75px}}
