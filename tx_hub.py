@@ -1,6 +1,7 @@
 import sqlite3
 from pathlib import Path
 from datetime import datetime, timezone
+from html import escape
 from flask import Blueprint, render_template_string, request, redirect, url_for, flash, abort
 
 tx = Blueprint("tx", __name__, url_prefix="/tx")
@@ -26,7 +27,12 @@ TOPICS = [
 ("10","Pensions: detailed rules"),
 ("11","National Insurance contributions"),
 ("12","Income tax administration"),
-("13","Mixed exam-standard consolidation")
+("13","Mixed income tax consolidation"),
+("14","Capital gains tax: disposals and reliefs"),
+("15","Inheritance tax: lifetime transfers and death estates"),
+("16","Corporation tax: profits, losses and groups"),
+("17","VAT: registration, computations and administration"),
+("18","Integrated TX mock examinations")
 ]
 def connect():
     c=sqlite3.connect(DB)
@@ -38,6 +44,7 @@ def initialize():
         CREATE TABLE IF NOT EXISTS topics (code TEXT PRIMARY KEY, title TEXT NOT NULL, notes_created INTEGER NOT NULL DEFAULT 0, taught INTEGER NOT NULL DEFAULT 0, tested INTEGER NOT NULL DEFAULT 0, marked INTEGER NOT NULL DEFAULT 0, corrected INTEGER NOT NULL DEFAULT 0, retested INTEGER NOT NULL DEFAULT 0, applied INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'Not Started', latest_mark REAL);
         CREATE TABLE IF NOT EXISTS attempts (id INTEGER PRIMARY KEY AUTOINCREMENT, topic TEXT NOT NULL, submitted_at TEXT NOT NULL, score REAL NOT NULL, max_marks REAL NOT NULL, answers TEXT NOT NULL);
         CREATE TABLE IF NOT EXISTS weaknesses (id INTEGER PRIMARY KEY AUTOINCREMENT, topic TEXT NOT NULL, category TEXT NOT NULL, details TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'Open - awaiting retest');
+        CREATE TABLE IF NOT EXISTS goals (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, topic TEXT, due TEXT, done INTEGER NOT NULL DEFAULT 0);
         """)
         for code,name in TOPICS:
             c.execute("INSERT OR IGNORE INTO topics(code,title,notes_created,status) VALUES(?,?,?,?)",(code,name,1 if code in ('1A','1B','1C','1D','1E') else 0,"Notes available" if code in ('1A','1B','1C','1D','1E') else "Not Started"))
@@ -52,16 +59,31 @@ def page(title, content):
     return render_template_string(shell, title=title, content=content, path=request.path)
 @tx.get("/")
 def home():
-    with connect() as c:
-        rows=c.execute("SELECT * FROM topics").fetchall()
-        attempts=c.execute("SELECT COUNT(*) FROM attempts").fetchone()[0]
-        weaknesses=c.execute("SELECT COUNT(*) FROM weaknesses WHERE status LIKE 'Open%'").fetchone()[0]
-    return page("ACCA TX / F6 — Jaykiran",'<div class="card"><span class="eyebrow">TAXATION • FA2025</span><h2>Taxation (TX-UK), FA2025</h2><p>Separate from AA. Notes for Parts 1A–1E are available; none is marked complete until tested, corrected and successfully retested where necessary.</p><p>Topics: '+str(len(rows))+' | Submitted TX attempts: '+str(attempts)+' | Open TX weaknesses: '+str(weaknesses)+'</p><p><a href="/tx/topics">View full TX syllabus roadmap</a> · <a href="/tx/quiz">Take the 1A diagnostic</a></p></div>')
+    with connect() as db:
+        rows=db.execute("SELECT * FROM topics ORDER BY rowid").fetchall()
+        attempts=db.execute("SELECT * FROM attempts ORDER BY id DESC LIMIT 5").fetchall()
+        weak=db.execute("SELECT COUNT(*) FROM weaknesses WHERE status LIKE 'Open%'").fetchone()[0]
+        goals=db.execute("SELECT * FROM goals WHERE done=0 ORDER BY due IS NULL,due,id LIMIT 5").fetchall()
+    notes=sum(int(x["notes_created"]) for x in rows)
+    completed=sum(x["status"]=="Complete" for x in rows)
+    avg=round(sum(x["score"]/x["max_marks"]*100 for x in attempts)/len(attempts),1) if attempts else None
+    cards=[("Notes available",str(notes)+" / "+str(len(rows)),"Revision notes, not completed chapters"),("Officially complete",str(completed),"Only after exam-standard progression"),("Open weaknesses",str(weak),"Awaiting correction and successful retest"),("Average mark",str(avg)+"%" if avg is not None else "—","Recent recorded TX attempts")]
+    kpis='<div class="kpi-grid">'+''.join('<div class="card kpi"><span>'+a+'</span><strong>'+b+'</strong><small>'+d+'</small></div>' for a,b,d in cards)+'</div>'
+    progress=''.join('<div><b>'+escape(r["code"])+'</b><span>'+escape(r["title"])+'</span><em class="'+("inprogress" if r["status"]!="Not Started" else "neutral")+'">'+escape(r["status"])+'</em></div>' for r in rows[:9])
+    tasks=''.join('<p class="muted">'+escape(g["title"])+('</p>') for g in goals) or '<p class="muted">No active goals yet.</p>'
+    recent=''.join('<tr><td>'+escape(r["topic"])+'</td><td>'+str(r["score"])+'/'+str(r["max_marks"])+'</td><td>'+escape(r["submitted_at"][:10])+'</td></tr>' for r in attempts) or '<tr><td colspan="3">No attempts yet.</td></tr>'
+    content=kpis+'<div class="two-col"><section class="card"><div class="card-head"><div><span class="eyebrow">SYLLABUS</span><h2>Topic progress</h2></div><a class="text-link" href="/tx/topics">View all</a></div><div class="progressbar"><span style="width:'+str(round(notes/len(rows)*100,1))+'%"></span></div><p class="muted">'+str(notes)+' parts have revision notes. Notes do not equal completion.</p><div class="chapter-mini">'+progress+'</div></section><section class="card"><span class="eyebrow">STUDY PLANNER</span><h2>Goals & to-do</h2>'+tasks+'<a class="button" href="/tx/goals">Manage goals</a><a class="button ghost" href="/tx/quiz">Take diagnostic</a></section></div><div class="two-col"><section class="card"><span class="eyebrow">CURRENT FOCUS</span><h2>Income tax 1A–1E</h2><p class="muted">Open detailed revision notes and worked examples. Assessment and successful retesting are required before marking a topic complete.</p><a class="button" href="/tx/notes/1A">Open study notes</a></section><section class="card"><span class="eyebrow">EXAM TECHNIQUE</span><h2>Correct and retest</h2><p class="muted">All technical and interpretation weaknesses remain open until demonstrated correct in a later assessment.</p><a class="button ghost" href="/tx/weaknesses">Weakness log</a></section></div><section class="card"><div class="card-head"><div><span class="eyebrow">RECENT</span><h2>Assessment history</h2></div><a class="text-link" href="/tx/history">Full history</a></div><div class="table-wrap"><table><thead><tr><th>Topic</th><th>Score</th><th>Date (UTC)</th></tr></thead><tbody>'+recent+'</tbody></table></div></section>'
+    return page("Dashboard",content)
+
 @tx.get("/topics")
 def topics():
-    with connect() as c: rows=c.execute("SELECT * FROM topics").fetchall()
-    trs=''.join('<tr><td>'+r['code']+'</td><td>'+r['title']+'</td><td>'+r['status']+'</td></tr>' for r in rows)
-    return page("TX Topic Progress",'<div class="card"><p class="muted">Notes available is not equivalent to topic completion.</p><table><tr><th>Part</th><th>Topic</th><th>Status</th></tr>'+trs+'</table></div>')
+    with connect() as db: rows=db.execute("SELECT * FROM topics ORDER BY rowid").fetchall()
+    cards=[]
+    for r in rows:
+        steps=''.join('<span class="'+("done" if r[k] else "")+'">'+label+'</span>' for k,label in [("taught","Taught"),("tested","Tested"),("marked","Marked"),("corrected","Corrected"),("retested","Retested"),("applied","Applied")])
+        notes='<a class="button ghost" href="/tx/notes/'+escape(r["code"])+'">Study notes</a>' if r["code"] in ("1A","1B","1C","1D","1E") else ""
+        cards.append('<article class="card chapter-card"><span class="eyebrow">PART '+escape(r["code"])+'</span><h2>'+escape(r["title"])+'</h2><div class="chips"><span class="chip '+("yes" if r["notes_created"] else "no")+'">'+("Notes available" if r["notes_created"] else "Notes not created")+'</span><span class="chip '+("progress" if r["status"]!="Not Started" else "no")+'">'+escape(r["status"])+'</span></div><div class="steps">'+steps+'</div>'+notes+'</article>')
+    return page("TX Syllabus & Topic Progress",'<div class="info-box">FA2025 teaching roadmap, not Kaplan chapter numbering. Includes income tax, CGT, IHT, corporation tax and VAT. Notes available is not topic completion.</div><div class="chapter-grid">'+''.join(cards)+'</div>')
 QUESTIONS=[
 ("Employment £30,000, property £4,000, bank interest £2,000 and dividends £1,000. What is non-savings income?",["£30,000","£34,000","£36,000","£37,000"],1,"income classification"),
 ("A taxpayer receives £25,000 employment income, £1,500 bank interest and £500 dividends. What is total income?",["£25,000","£26,500","£27,000","£27,500"],2,"total income"),
