@@ -16,7 +16,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 
-DATABASES = ("aa_hub.db", "tx_hub.db", "study_time.db")
+DATABASES = {
+    "aa_hub.db": "AA_DB_PATH",
+    "tx_hub.db": "TX_DB_PATH",
+    "study_time.db": "STUDY_TIME_DB_PATH",
+}
 
 
 def backup(root, output):
@@ -28,14 +32,18 @@ def backup(root, output):
         raise NotADirectoryError(root)
     output.parent.mkdir(parents=True, exist_ok=True)
 
-    present = [n for n in DATABASES if (root / n).is_file()]
+    sources = {
+        name: Path(os.environ[env_var]).resolve() if os.getenv(env_var) else (root / name)
+        for name, env_var in DATABASES.items()
+    }
+    present = {name: path for name, path in sources.items() if path.is_file()}
     if not present:
-        raise FileNotFoundError("No study databases found in " + str(root))
+        raise FileNotFoundError("No study databases found in configured paths or " + str(root))
     os.umask(0o077)
     with tempfile.TemporaryDirectory() as temp:
         snapshots = []
-        for name in present:
-            src = sqlite3.connect("file:" + (root / name).as_posix() + "?mode=ro", uri=True)
+        for name, database_path in present.items():
+            src = sqlite3.connect("file:" + database_path.as_posix() + "?mode=ro", uri=True)
             dest_path = Path(temp) / name
             dest = sqlite3.connect(str(dest_path))
             try:
@@ -51,14 +59,14 @@ def backup(root, output):
         manifest = {
             "created_utc": datetime.now(timezone.utc).isoformat(),
             "purpose": "Jay Study Hub pre-deployment backup",
-            "databases": present,
+            "databases": list(present),
             "excluded": [".env", "hosting API keys", "CricEdge files"],
         }
         with ZipFile(output, "x", compression=ZIP_DEFLATED) as z:
             for p in snapshots:
                 z.write(p, p.name)
             z.writestr("backup_manifest.json", json.dumps(manifest, indent=2))
-    return output, present
+    return output, list(present)
 
 
 def main():
