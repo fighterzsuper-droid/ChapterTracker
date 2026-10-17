@@ -15,6 +15,7 @@
     </div>
     <nav>
       <a class="{{ 'active' if request.endpoint == 'dashboard' else '' }}" href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a class="{{ 'active' if request.endpoint == 'watcher.self_overview' else '' }}" href="{{ url_for('watcher.self_overview') }}">Self Overview</a>
       <a class="{{ 'active' if request.endpoint == 'chapters' else '' }}" href="{{ url_for('chapters') }}">Chapters</a>
       <a class="{{ 'active' if request.endpoint in ['tests','take_test'] else '' }}" href="{{ url_for('tests') }}">Tests</a>
       <a class="{{ 'active' if request.endpoint == 'weaknesses' else '' }}" href="{{ url_for('weaknesses') }}">Weaknesses</a>
