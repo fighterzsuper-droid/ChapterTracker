@@ -15,6 +15,7 @@ class AppSmokeTests(unittest.TestCase):
             "AA_DB_PATH": str(Path(cls.tmp.name) / "aa_hub.db"),
             "TX_DB_PATH": str(Path(cls.tmp.name) / "tx_hub.db"),
             "STUDY_TIME_DB_PATH": str(Path(cls.tmp.name) / "study_time.db"),
+            "BOARD_STORAGE_PATH": str(Path(cls.tmp.name) / "board_data"),
             "HUB_ACCESS_PASSWORD": "testing-only-password",
             "FLASK_SECRET_KEY": "testing-secret-should-be-random-in-production",
             "HUB_ALLOW_HTTP": "1",
