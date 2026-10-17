@@ -94,7 +94,7 @@
       } catch (e) { status(errorMessage(e), true); }
     });
     outer.append(button);
-    if (type === "document") {
+    if (type === "document" && !item.builtin) {
       const remove = document.createElement("button");
       remove.className = "board-file-remove";
       remove.type = "button";
@@ -154,7 +154,7 @@
     el("board-note-editor").hidden = false;
   }
   async function openDocument(item) {
-    if (selectedDoc && currentFileType === "Note" &&
+    if (selectedDoc && !selectedDoc.builtin && currentFileType === "Note" &&
         el("board-note-text").value !== noteLastText) await saveNote();
     selectedDoc = item;
     currentFileType = fileType(item);
@@ -175,7 +175,9 @@
       const text = await response.text();
       noteLastText = text;
       el("board-note-text").value = text;
-      el("board-note-status").textContent = "Ready to edit";
+      el("board-note-text").readOnly = Boolean(item.builtin);
+      el("board-save-note").hidden = Boolean(item.builtin);
+      el("board-note-status").textContent = item.builtin ? "Existing TX notes · read-only" : "Ready to edit";
       showNote();
     } else {
       status("Spreadsheet files: use Import Excel to open as an editable workbook");
@@ -184,7 +186,7 @@
     renderLists();
   }
   async function saveNote() {
-    if (!selectedDoc || currentFileType !== "Note" || savingNote) return;
+    if (!selectedDoc || selectedDoc.builtin || currentFileType !== "Note" || savingNote) return;
     savingNote = true;
     el("board-note-status").textContent = "Saving note…";
     try {
@@ -511,7 +513,7 @@
       if (document.visibilityState !== "visible") return;
       try {
         await maybeSaveWorkbook();
-        if (selectedDoc && currentFileType === "Note" &&
+        if (selectedDoc && !selectedDoc.builtin && currentFileType === "Note" &&
             el("board-note-text").value !== noteLastText) await saveNote();
       } catch (_) {/* Visible error statuses already shown */ }
     }, 20000);
