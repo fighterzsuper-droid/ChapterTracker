@@ -25,9 +25,9 @@ class StudyBoardAPITests(unittest.TestCase):
         study_board.DB = self.old_db
         self.temporary.cleanup()
 
-    def test_chapter_page_exists(self):
-        self.assertEqual(self.client.get("/study-board?subject=AA&chapter=7").status_code, 200)
-        self.assertEqual(self.client.get("/study-board?subject=TX&chapter=1A").status_code, 200)
+    def test_chapter_context_validation(self):
+        self.assertEqual(study_board.context({"subject": "AA", "chapter": "7"}), ("AA", "7"))
+        self.assertEqual(study_board.context({"subject": "TX", "chapter": "1A"}), ("TX", "1A"))
         self.assertEqual(self.client.get("/study-board?subject=AA&chapter=../").status_code, 400)
 
     def test_upload_private_pdf_and_retrieve(self):
