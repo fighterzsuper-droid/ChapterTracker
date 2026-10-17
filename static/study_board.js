@@ -493,6 +493,23 @@
     q("[data-pdf-next]").addEventListener("click", () => pdf?.goTo(pdf.currentPage + 1));
     q("[data-pdf-page]").addEventListener("change", event => pdf?.goTo(event.target.value));
     el("board-pdf-zoom").addEventListener("change", event => pdf?.setZoom(event.target.value));
+    function nudgeZoom(direction) {
+      if (!pdf?.document) return;
+      const choices = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
+      const current = pdf.zoomMode === "fit" ? pdf.scale() : Number(pdf.zoomMode);
+      const next = direction > 0 ? (choices.find(x => x > current + 0.015) || 3) :
+        (choices.slice().reverse().find(x => x < current - 0.015) || 0.5);
+      pdf.setZoom(String(next));
+      el("board-pdf-zoom").value = String(next);
+    }
+    q("[data-pdf-zoom-in]").addEventListener("click", () => nudgeZoom(1));
+    q("[data-pdf-zoom-out]").addEventListener("click", () => nudgeZoom(-1));
+    el("board-pdf-scroll").addEventListener("wheel", event => {
+      // Ctrl/Command + scroll zooms the document. Plain wheel scroll remains native.
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+      nudgeZoom(event.deltaY < 0 ? 1 : -1);
+    }, { passive: false });
     q("[data-pdf-rotate]").addEventListener("click", () => pdf?.rotate());
     q("[data-pdf-download]").addEventListener("click", () => {
       if (selectedDoc) window.open(selectedDoc.view_url + "?download=1", "_blank", "noopener");
