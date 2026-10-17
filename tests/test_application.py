@@ -56,7 +56,7 @@ class AppSmokeTests(unittest.TestCase):
 
     def test_private_portals_and_overview(self):
         self.login()
-        for path in ("/", "/tx/", "/self-overview", "/chapters", "/tests", "/weaknesses"):
+        for path in ("/", "/tx/", "/self-overview", "/chapters", "/tests", "/weaknesses", "/study-board?subject=AA&chapter=7", "/study-board?subject=TX&chapter=1A"):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200, path + ": " + str(response.data[:200]))
         response = self.client.get("/api/self-overview")
