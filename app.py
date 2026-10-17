@@ -473,6 +473,8 @@ init_db()
 
 from tx_hub import tx
 app.register_blueprint(tx)
+from study_time import study_time
+app.register_blueprint(study_time)
 from restart_ui import restart_ui
 app.register_blueprint(restart_ui)
 
