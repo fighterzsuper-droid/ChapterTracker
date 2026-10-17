@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from pathlib import Path
 from datetime import datetime, timezone
@@ -5,7 +6,7 @@ from html import escape
 from flask import Blueprint, render_template_string, request, redirect, url_for, flash, abort
 
 tx = Blueprint("tx", __name__, url_prefix="/tx")
-DB = Path(__file__).resolve().parent / "tx_hub.db"
+DB = Path(os.getenv("TX_DB_PATH", str(Path(__file__).resolve().parent / "tx_hub.db")))
 TOPICS = [
 ("1A","Income tax computation and classification"),
 ("1B","Personal Allowance and adjusted net income"),
@@ -39,6 +40,7 @@ def connect():
     c.row_factory=sqlite3.Row
     return c
 def initialize():
+    DB.parent.mkdir(parents=True, exist_ok=True)
     with connect() as c:
         c.executescript("""
         CREATE TABLE IF NOT EXISTS topics (code TEXT PRIMARY KEY, title TEXT NOT NULL, notes_created INTEGER NOT NULL DEFAULT 0, taught INTEGER NOT NULL DEFAULT 0, tested INTEGER NOT NULL DEFAULT 0, marked INTEGER NOT NULL DEFAULT 0, corrected INTEGER NOT NULL DEFAULT 0, retested INTEGER NOT NULL DEFAULT 0, applied INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'Not Started', latest_mark REAL);
@@ -52,10 +54,10 @@ initialize()
 def page(title, content):
     shell = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ title }} — Jay's Exam Hub</title><link rel="stylesheet" href="/static/style.css"></head><body>
     <div class="shell"><aside class="sidebar"><div class="brand"><div class="brand-mark">TX</div><div><strong>Jay's Exam Hub</strong><span>ACCA Taxation • TX / F6</span></div></div>
-    <nav><a class="{{ 'active' if path == '/tx/' else '' }}" href="/tx/">Dashboard</a><a class="{{ 'active' if path == '/tx/topics' else '' }}" href="/tx/topics">Chapters</a><a class="{{ 'active' if path == '/tx/quiz' else '' }}" href="/tx/quiz">Tests</a><a class="{{ 'active' if path == '/tx/weaknesses' else '' }}" href="/tx/weaknesses">Weaknesses</a><a class="{{ 'active' if path == '/tx/history' else '' }}" href="/tx/history">Assessment History</a><a href="/tx/goals">Goals & To-do</a></nav><div class="sidebar-foot">Jaykiran • TX/F6<br>Progress is not complete until retested and applied.</div></aside>
+    <nav><a class="{{ 'active' if path == '/tx/' else '' }}" href="/tx/">Dashboard</a><a href="/self-overview">Self Overview</a><a class="{{ 'active' if path == '/tx/topics' else '' }}" href="/tx/topics">Chapters</a><a class="{{ 'active' if path == '/tx/quiz' else '' }}" href="/tx/quiz">Tests</a><a class="{{ 'active' if path == '/tx/weaknesses' else '' }}" href="/tx/weaknesses">Weaknesses</a><a class="{{ 'active' if path == '/tx/history' else '' }}" href="/tx/history">Assessment History</a><a href="/tx/goals">Goals & To-do</a></nav><div class="sidebar-foot">Jaykiran • TX/F6<br>Progress is not complete until retested and applied.</div></aside>
     <main><header class="topbar"><div><h1>{{ title }}</h1><p>Exam-focused study, testing and weakness tracking.</p></div>
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:auto"><label for="subject-switch" style="font-size:13px">Subject</label><select id="subject-switch" onchange="location.href=this.value" style="padding:10px 14px;border-radius:10px;border:1px solid #58708c;background:#1b2a40;color:white"><option value="/">AA / F8</option><option value="/tx/" selected>TX / F6</option></select><a href="/admin/restart" class="button ghost">Restart hosting</a></div></header>
-    {{ content|safe }}</main></div></body></html>"""
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:auto"><label for="subject-switch" style="font-size:13px">Subject</label><select id="subject-switch" onchange="location.href=this.value" style="padding:10px 14px;border-radius:10px;border:1px solid #58708c;background:#1b2a40;color:white"><option value="/">AA / F8</option><option value="/tx/" selected>TX / F6</option></select><a href="/admin/restart" class="button ghost">Restart hosting</a><form method="post" action="/logout" style="display:inline-flex;margin:0"><button class="button ghost" type="submit">Sign out</button></form></div></header>
+    {{ content|safe }}</main></div><script src="/static/study_time.js" defer></script></body></html>"""
     return render_template_string(shell, title=title, content=content, path=request.path)
 @tx.get("/")
 def home():

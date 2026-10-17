@@ -1,3 +1,17 @@
-aa_hub.db
+# Study databases and hosting secrets must NEVER be committed
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
+*.sqlite
+*.sqlite3
 __pycache__/
 *.pyc
+.pytest_cache/
+.venv/
+venv/
+backups/
+server_backups/
+*.zip
+*.tar.gz
