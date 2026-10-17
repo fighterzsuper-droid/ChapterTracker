@@ -12,6 +12,7 @@
 <span class="chip {{ 'progress' if c.status == 'In Progress' else ('yes' if c.status == 'Complete' else 'no') }}">{{ c.status }}</span>
 </div>
 {% if c.latest_mark is not none %}<div class="mark">Latest mark <b>{{ c.latest_mark|round(1) }}%</b></div>{% endif %}
+<a class="button ghost" href="{{ url_for('board.study_board', subject='AA', chapter=c.chapter) }}">Open Study Board · PDF + Excel</a>
 <div class="steps">
 <span class="{{ 'done' if c.taught else '' }}">Taught</span>
 <span class="{{ 'done' if c.tested else '' }}">Tested</span>
