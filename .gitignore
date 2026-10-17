@@ -1,3 +1,6 @@
 aa_hub.db
 __pycache__/
 *.pyc
+study_time.db
+study_time.db-shm
+study_time.db-wal
