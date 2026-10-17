@@ -95,7 +95,12 @@ def origin_is_same_site():
     from urllib.parse import urlsplit
     try:
         url = urlsplit(origin)
-        return url.scheme == request.scheme and url.netloc == request.host
+        # Reverse proxies may terminate HTTPS before Flask receives the request.
+        # Match the public host, accepting the browser's HTTPS Origin.
+        allowed_scheme = (url.scheme == "https") or (
+            url.scheme == "http" and request.scheme == "http"
+        )
+        return allowed_scheme and url.netloc == request.host
     except ValueError:
         return False
 
