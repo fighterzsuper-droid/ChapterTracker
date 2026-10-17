@@ -3,29 +3,22 @@
 (function () {
   "use strict";
 
+  // Statistics viewing is not studying. Avoid inflating totals while browsing charts.
+  if (location.pathname === "/self-overview") return;
   const subject = location.pathname.startsWith("/tx/") ? "TX" : "AA";
-  const KEY = "jay-study-tab-id";
-  const SEQ_KEY = "jay-study-sequence";
   const HEARTBEAT_MS = 10000;
-
-  function stored(name) {
-    try { return sessionStorage.getItem(name); } catch (_) { return null; }
-  }
-  function save(name, value) {
-    try { sessionStorage.setItem(name, String(value)); } catch (_) {}
-  }
   function makeId() {
     const bytes = new Uint8Array(16);
     crypto.getRandomValues(bytes);
     return Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
   }
 
-  const tabId = /^[a-f0-9]{32}$/.test(stored(KEY) || "") ? stored(KEY) : makeId();
-  save(KEY, tabId);
-  let sequence = Number(stored(SEQ_KEY)) || 0;
+  // Unique per DOCUMENT, not sessionStorage: duplicated browser tabs must never
+  // share the same identity or close one another's time lease.
+  const tabId = makeId();
+  let sequence = 0;
   function nextSequence() {
     sequence += 1;
-    save(SEQ_KEY, sequence);
     return sequence;
   }
 
@@ -134,7 +127,7 @@
   }
 
   // Send changes immediately, including tab swaps and switching to another app.
-  for (const eventName of ["visibilitychange", "focus", "blur", "pageshow", "online", "offline"]) {
+  for (const eventName of ["focus", "blur", "pageshow", "online", "offline"]) {
     window.addEventListener(eventName, pulse, { passive: true });
   }
   document.addEventListener("visibilitychange", pulse, { passive: true });
