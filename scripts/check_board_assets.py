@@ -10,7 +10,6 @@ URLS = [
     "https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js",
     "https://unpkg.com/echarts@5.6.0/dist/echarts.min.js",
     "https://unpkg.com/@univerjs/presets@0.25.1/lib/umd/index.js",
-    "https://unpkg.com/@univerjs/core@0.25.1/lib/umd/index.js",
     "https://unpkg.com/@univerjs/preset-sheets-core@0.25.1/lib/umd/index.js",
     "https://unpkg.com/@univerjs/preset-sheets-core@0.25.1/lib/umd/locales/en-US.js",
     "https://unpkg.com/@univerjs/preset-sheets-core@0.25.1/lib/index.css",
