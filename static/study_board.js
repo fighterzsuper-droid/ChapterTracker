@@ -301,12 +301,13 @@
       throw Error("Spreadsheet packages failed to load. Check your connection or content blocker.");
     }
     const { createUniver } = window.UniverPresets;
-    const { LocaleType, mergeLocales } = window.UniverCore;
     const { UniverSheetsCorePreset } = window.UniverPresetSheetsCore;
+    // The presets UMD ships its own core dependency graph. Importing a second
+    // @univerjs/core UMD creates mismatched DI tokens and breaks the editor.
     const result = createUniver({
-      locale: LocaleType.EN_US,
+      locale: "enUS",
       locales: {
-        [LocaleType.EN_US]: mergeLocales(window.UniverPresetSheetsCoreEnUS)
+        enUS: window.UniverPresetSheetsCoreEnUS
       },
       presets: [UniverSheetsCorePreset({
         container: el("board-sheet-editor"),
