@@ -296,7 +296,7 @@
 
   function initEditor() {
     if (univerAPI) return;
-    if (!window.UniverPresets || !window.UniverCore ||
+    if (!window.UniverPresets ||
         !window.UniverPresetSheetsCore || !window.UniverPresetSheetsCoreEnUS) {
       throw Error("Spreadsheet packages failed to load. Check your connection or content blocker.");
     }
