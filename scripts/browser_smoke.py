@@ -79,20 +79,20 @@ with sync_playwright() as p:
         b"<< /Type /Catalog /Pages 2 0 R >>",
         b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
         b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
-        b"<< /Length " + str(len(stream)).encode() + b" >>\\nstream\\n" + stream + b"\\nendstream",
+        b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream",
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
     ]
-    contents = bytearray(b"%PDF-1.4\\n")
+    contents = bytearray(b"%PDF-1.4\n")
     starts = [0]
     for i, obj in enumerate(objects, 1):
         starts.append(len(contents))
-        contents.extend(str(i).encode() + b" 0 obj\\n" + obj + b"\\nendobj\\n")
+        contents.extend(str(i).encode() + b" 0 obj\n" + obj + b"\nendobj\n")
     xref_at = len(contents)
-    contents.extend(b"xref\\n0 6\\n0000000000 65535 f \\n")
+    contents.extend(b"xref\n0 6\n0000000000 65535 f \n")
     for offset in starts[1:]:
-        contents.extend(f"{offset:010} 00000 n \\n".encode())
-    contents.extend(b"trailer\\n<< /Size 6 /Root 1 0 R >>\\nstartxref\\n" +
-                    str(xref_at).encode() + b"\\n%%EOF")
+        contents.extend(f"{offset:010} 00000 n \n".encode())
+    contents.extend(b"trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" +
+                    str(xref_at).encode() + b"\n%%EOF")
     page.locator("#board-upload").set_input_files({
         "name": "study-page.pdf", "mimeType": "application/pdf", "buffer": bytes(contents)
     })
