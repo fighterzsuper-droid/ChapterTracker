@@ -1,0 +1,52 @@
+{
+  "project": "Jay Study Hub",
+  "owner": "Jayakiran",
+  "startup": "app.py",
+  "environment": "Bot-Hosting Python with HTTPS",
+  "timezone": "Asia/Kuwait",
+  "runtime_files": [
+    "app.py",
+    "tx_hub.py",
+    "security.py",
+    "study_time.py",
+    "watcher.py",
+    "restart_ui.py",
+    "requirements.txt",
+    "templates/404.html",
+    "templates/attempt.html",
+    "templates/base.html",
+    "templates/chapters.html",
+    "templates/dashboard.html",
+    "templates/history.html",
+    "templates/login.html",
+    "templates/setup_required.html",
+    "templates/self_overview.html",
+    "templates/take_test.html",
+    "templates/tests.html",
+    "templates/weaknesses.html",
+    "static/style.css",
+    "static/overview.js",
+    "static/study_time.js"
+  ],
+  "keep_existing_private_files": [
+    ".env",
+    "aa_hub.db",
+    "tx_hub.db",
+    "study_time.db"
+  ],
+  "recommended_environment": [
+    "HUB_ACCESS_PASSWORD or HUB_PASSWORD_HASH",
+    "FLASK_SECRET_KEY",
+    "AA_DB_PATH",
+    "TX_DB_PATH",
+    "STUDY_TIME_DB_PATH"
+  ],
+  "excluded_from_hosting": [
+    "CricEdge Python modules",
+    "players.db",
+    "test modules",
+    "GitHub workflows",
+    "docs"
+  ],
+  "safe_cutover": "backup and verify databases before replacing production files; do not delete private files"
+}
