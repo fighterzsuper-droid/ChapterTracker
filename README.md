@@ -43,3 +43,37 @@ and persistent remote database would be required before treating the timer as
 a secure, independently verifiable record.
 
 Run regression tests with: python -m unittest discover -s tests -v
+
+
+## Self Overview on the existing Bot-Hosting website
+
+The existing Flask application registers a `watcher.py` Blueprint. **Do not
+run watcher.py as a separate bot process**: the normal `app.py` startup
+already serves it at `/self-overview`. The navigation sidebar links to it
+from both AA/F8 and TX/F6.
+
+Self Overview includes:
+- A live clock calibrated from the server and displayed using `Asia/Kuwait`.
+- Focused study time today, in the past seven days, and all time.
+- A selectable historical day with 24 hourly bars (00:00–23:59 Kuwait).
+- Daily activity for the past seven days, plus AA/TX subject filters.
+- Automatic chart refresh approximately every ten seconds while visible.
+
+The overview page itself does **not** earn study time. Historical totals
+come from the server's `study_day` and `study_hour` SQLite tables; individual
+heartbeat intervals are split across local hour and midnight boundaries.
+
+On Bot-Hosting, optionally set `STUDY_TIME_DB_PATH` to an **absolute location
+on persistent storage**, for example a path on a hosting volume you know
+survives deployment. If unset, it defaults to `study_time.db` next to
+`app.py`. Do not rely solely on Git's ignore rules for database durability.
+Back up the study database regularly.
+
+The existing application has no login, meaning anyone who can access the
+site can currently view the metrics/API and spoof timer requests. Add
+server-side authentication before considering the site confidential or
+tamper-proof.
+
+After merging the feature branch into `main`, restart the Python deployment
+on Bot-Hosting with automatic Git pull enabled. Check `/self-overview`
+and confirm that switching away from study pages immediately pauses credit.
