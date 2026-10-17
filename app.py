@@ -7,7 +7,7 @@ from pathlib import Path
 from flask import Flask, abort, flash, redirect, render_template, request, url_for
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "aa_hub.db"
+DB_PATH = Path(os.getenv("AA_DB_PATH", str(BASE_DIR / "aa_hub.db")))
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "jay-aa-local-secret-change-me")
@@ -154,6 +154,7 @@ def get_db():
     return conn
 
 def init_db():
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = get_db()
     conn.executescript("""
     CREATE TABLE IF NOT EXISTS chapter_progress (
@@ -229,6 +230,8 @@ def init_db():
     );
     """)
 
+    # Do not rewrite real progress when the server restarts.
+    first_chapter_is_new = conn.execute("SELECT 1 FROM chapter_progress WHERE chapter=1").fetchone() is None
     for i, name in enumerate(CHAPTERS, start=1):
         conn.execute(
             """INSERT OR IGNORE INTO chapter_progress
@@ -237,12 +240,14 @@ def init_db():
             (i, name, 1 if i <= 7 else 0, "Not Started")
         )
 
-    conn.execute(
-        """UPDATE chapter_progress
-        SET notes_created=1, taught=1, tested=1, marked=1, corrected=1,
-            retested=0, applied=0, latest_mark=76.9, status='In Progress'
-        WHERE chapter=1"""
-    )
+    if first_chapter_is_new:
+        # Migrate the starter baseline once only; never reset completed work.
+        conn.execute(
+            """UPDATE chapter_progress
+            SET notes_created=1, taught=1, tested=1, marked=1, corrected=1,
+                retested=0, applied=0, latest_mark=76.9, status='In Progress'
+            WHERE chapter=1"""
+        )
 
     prior = conn.execute("SELECT id FROM assessments WHERE title=?", ("Chapter 1 Quiz 1 (Prior)",)).fetchone()
     if not prior:
