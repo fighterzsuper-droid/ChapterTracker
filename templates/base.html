@@ -47,6 +47,7 @@
     {% block content %}{% endblock %}
   </main>
 </div>
+<script src="{{ url_for('static', filename='study_time.js') }}" defer></script>
 <script>
 document.querySelectorAll("[data-confirm-submit]").forEach(function(form){
   form.addEventListener("submit", function(e){
