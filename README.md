@@ -86,3 +86,39 @@ external Jotform or Google Sheets sync is claimed until such integrations are
 implemented and verified. A topic is only complete after teaching, testing,
 marking, correction, successful retesting where needed, and exam-standard
 application.
+
+
+## Study Board — chapter PDF + editable spreadsheet
+
+Open **Study Board** from the AA/TX sidebar or from any chapter card. Each
+subject/chapter has its own private resource library.
+
+- Upload PDF, Markdown/TXT study notes and Excel files.
+- Open PDF textbooks in a continuous-scrolling reader with page navigation,
+  zoom in/out (buttons, dropdown, Ctrl-scroll), rotate, find and download.
+- Create and edit notes or view existing TX chapter notes.
+- Work in an Excel-style [Univer Sheets](https://univer.ai) spreadsheet next to
+  the PDF. Supports core spreadsheet editing, formulas, standard formatting,
+  sheet tabs and zoom. The PDF and spreadsheet share a resizable split view,
+  with single-pane and narrow-screen modes.
+- Import XLSX/XLS/CSV and export basic XLSX using SheetJS Community Edition.
+  This is **not Microsoft Excel**, and it does not claim full VBA, Power Query,
+  chart, formatting or formula compatibility. Use the "Excel for web" link
+  for the original Microsoft Excel application.
+- Workbook snapshots are stored on the server (not only in browser storage),
+  with 20-second foreground autosave, manual Save, and revision checking.
+
+**Your PDFs uploaded in ChatGPT are not automatically hosted on Bot-Hosting.**
+For licensed study books, sign into the Hub and upload through Study Board.
+Do not commit those PDFs to GitHub. The default document upload limit is 32 MB.
+
+### Persistent storage
+
+Set \`BOARD_STORAGE_PATH\` to a persistent writable directory. It contains the
+private \`study_board.sqlite3\` workbook catalog and \`documents/\` PDFs/notes,
+all excluded from public Git. The backup script includes these files.
+
+In addition to the usual Python backend, Study Board uses pinned public-CDN
+versions of PDF.js, Univer, and SheetJS. External CDN access is required.
+See \`deployment/BOT_HOSTING_SETUP.md\` and \`deployment/manifest.json\`.
+
