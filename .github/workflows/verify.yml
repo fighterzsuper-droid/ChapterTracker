@@ -2,7 +2,7 @@ name: Verify Jay Study Hub
 
 on:
   push:
-    branches: [main, "feature/focused-study-timer"]
+    branches: [main, "feature/focused-study-timer", "rebuild/jay-study-hub-clean"]
   pull_request:
 
 jobs:
