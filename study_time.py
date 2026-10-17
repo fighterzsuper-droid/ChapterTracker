@@ -3,6 +3,7 @@
 This measures focused-tab time, NOT verified concentration. No idle-click detector:
 reading a page without interacting continues to count while it is foregrounded.
 """
+import os
 import re
 import sqlite3
 import time
@@ -13,7 +14,7 @@ from zoneinfo import ZoneInfo
 from flask import Blueprint, jsonify, request
 
 study_time = Blueprint("study_time", __name__, url_prefix="/api/study-time")
-DB = Path(__file__).resolve().parent / "study_time.db"
+DB = Path(os.getenv("STUDY_TIME_DB_PATH", str(Path(__file__).resolve().parent / "study_time.db")))
 try:
     ZONE = ZoneInfo("Asia/Kuwait")
 except Exception:
@@ -31,6 +32,7 @@ def connect():
 
 
 def initialize():
+    DB.parent.mkdir(parents=True, exist_ok=True)
     with connect() as db:
         db.executescript("""
             CREATE TABLE IF NOT EXISTS study_day (
