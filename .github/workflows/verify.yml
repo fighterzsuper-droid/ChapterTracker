@@ -24,3 +24,5 @@ jobs:
           node --check static/study_board.js
           node --check static/pdf_viewer.js
           node --check static/study_time.js
+      - name: Check pinned spreadsheet and PDF libraries
+        run: python scripts/check_board_assets.py
