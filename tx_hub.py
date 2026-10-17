@@ -52,7 +52,7 @@ initialize()
 def page(title, content):
     shell = """<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>{{ title }} — Jay's Exam Hub</title><link rel="stylesheet" href="/static/style.css"></head><body>
     <div class="shell"><aside class="sidebar"><div class="brand"><div class="brand-mark">TX</div><div><strong>Jay's Exam Hub</strong><span>ACCA Taxation • TX / F6</span></div></div>
-    <nav><a class="{{ 'active' if path == '/tx/' else '' }}" href="/tx/">Dashboard</a><a class="{{ 'active' if path == '/tx/topics' else '' }}" href="/tx/topics">Chapters</a><a class="{{ 'active' if path == '/tx/quiz' else '' }}" href="/tx/quiz">Tests</a><a class="{{ 'active' if path == '/tx/weaknesses' else '' }}" href="/tx/weaknesses">Weaknesses</a><a class="{{ 'active' if path == '/tx/history' else '' }}" href="/tx/history">Assessment History</a></nav><div class="sidebar-foot">Jaykiran • TX/F6<br>Progress is not complete until retested and applied.</div></aside>
+    <nav><a class="{{ 'active' if path == '/tx/' else '' }}" href="/tx/">Dashboard</a><a class="{{ 'active' if path == '/tx/topics' else '' }}" href="/tx/topics">Chapters</a><a class="{{ 'active' if path == '/tx/quiz' else '' }}" href="/tx/quiz">Tests</a><a class="{{ 'active' if path == '/tx/weaknesses' else '' }}" href="/tx/weaknesses">Weaknesses</a><a class="{{ 'active' if path == '/tx/history' else '' }}" href="/tx/history">Assessment History</a><a href="/tx/goals">Goals & To-do</a></nav><div class="sidebar-foot">Jaykiran • TX/F6<br>Progress is not complete until retested and applied.</div></aside>
     <main><header class="topbar"><div><h1>{{ title }}</h1><p>Exam-focused study, testing and weakness tracking.</p></div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:auto"><label for="subject-switch" style="font-size:13px">Subject</label><select id="subject-switch" onchange="location.href=this.value" style="padding:10px 14px;border-radius:10px;border:1px solid #58708c;background:#1b2a40;color:white"><option value="/">AA / F8</option><option value="/tx/" selected>TX / F6</option></select><a href="/admin/restart" class="button ghost">Restart hosting</a></div></header>
     {{ content|safe }}</main></div></body></html>"""
@@ -84,6 +84,34 @@ def topics():
         notes='<a class="button ghost" href="/tx/notes/'+escape(r["code"])+'">Study notes</a>' if r["code"] in ("1A","1B","1C","1D","1E") else ""
         cards.append('<article class="card chapter-card"><span class="eyebrow">PART '+escape(r["code"])+'</span><h2>'+escape(r["title"])+'</h2><div class="chips"><span class="chip '+("yes" if r["notes_created"] else "no")+'">'+("Notes available" if r["notes_created"] else "Notes not created")+'</span><span class="chip '+("progress" if r["status"]!="Not Started" else "no")+'">'+escape(r["status"])+'</span></div><div class="steps">'+steps+'</div>'+notes+'</article>')
     return page("TX Syllabus & Topic Progress",'<div class="info-box">FA2025 teaching roadmap, not Kaplan chapter numbering. Includes income tax, CGT, IHT, corporation tax and VAT. Notes available is not topic completion.</div><div class="chapter-grid">'+''.join(cards)+'</div>')
+
+@tx.route("/goals",methods=["GET","POST"])
+def goals():
+    if request.method=="POST":
+        action=request.form.get("action","add")
+        with connect() as db:
+            if action=="add":
+                title=request.form.get("title","").strip()[:180]
+                due=request.form.get("due","").strip()
+                if title: db.execute("INSERT INTO goals(title,due) VALUES(?,?)",(title,due or None))
+            elif action in ("toggle","delete"):
+                try: gid=int(request.form.get("id","0"))
+                except ValueError: gid=0
+                if action=="toggle": db.execute("UPDATE goals SET done=1-done WHERE id=?",(gid,))
+                else: db.execute("DELETE FROM goals WHERE id=?",(gid,))
+        return redirect(url_for("tx.goals"))
+    with connect() as db: rows=db.execute("SELECT * FROM goals ORDER BY done,due IS NULL,due,id DESC").fetchall()
+    form='<section class="card"><span class="eyebrow">STUDY PLANNER</span><h2>Add a goal or to-do</h2><form method="post" class="tx-goal-form"><input name="title" maxlength="180" required placeholder="e.g. Complete five income tax computations"><input name="due" type="date"><button class="button" type="submit">Add goal</button></form></section>'
+    items=[]
+    for r in rows:
+        actions=''
+        for action,label in [("toggle","Reopen" if r["done"] else "Mark done"),("delete","Delete")]:
+            actions+='<form method="post"><input type="hidden" name="action" value="'+action+'"><input type="hidden" name="id" value="'+str(r["id"])+'"><button class="button ghost" type="submit">'+label+'</button></form>'
+        items.append('<article class="card tx-task"><div><span class="eyebrow">'+("COMPLETED" if r["done"] else "TO DO")+'</span><h2>'+escape(r["title"])+'</h2><p class="muted">'+("Due "+escape(r["due"]) if r["due"] else "No deadline")+'</p></div><div class="tx-task-actions">'+actions+'</div></article>')
+    done=sum(int(r["done"]) for r in rows)
+    stats='<div class="kpi-grid">'+''.join('<div class="card kpi"><span>'+label+'</span><strong>'+str(val)+'</strong></div>' for label,val in [("Total goals",len(rows)),("Completed",done),("Remaining",len(rows)-done),("Completion rate",str(round(done/len(rows)*100) if rows else 0)+"%")])+'</div>'
+    return page("Goals & To-do",stats+form+'<div class="tx-task-list">'+(''.join(items) if items else '<div class="empty">No goals yet.</div>')+'</div><div class="info-box">Completing a to-do does not mark a topic complete. Exam-standard assessment and retesting are still required.</div>')
+
 QUESTIONS=[
 ("Employment £30,000, property £4,000, bank interest £2,000 and dividends £1,000. What is non-savings income?",["£30,000","£34,000","£36,000","£37,000"],1,"income classification"),
 ("A taxpayer receives £25,000 employment income, £1,500 bank interest and £500 dividends. What is total income?",["£25,000","£26,500","£27,000","£27,500"],2,"total income"),
