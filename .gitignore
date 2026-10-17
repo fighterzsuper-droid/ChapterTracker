@@ -15,3 +15,5 @@ backups/
 server_backups/
 *.zip
 *.tar.gz
+# Private chapter uploads and saved workbooks
+board_data/
