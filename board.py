@@ -140,7 +140,37 @@ def documents():
             """SELECT * FROM board_documents WHERE subject=? AND chapter=?
                ORDER BY created_at DESC, display_name ASC""", (subject, chapter)
         ).fetchall()
-    return jsonify({"documents": [api_document(row) for row in rows]})
+    items = [api_document(row) for row in rows]
+    if subject == "TX":
+        # Reuse existing TX notes without copying them into public uploads.
+        from tx_hub import STUDY_NOTES
+        if chapter in STUDY_NOTES:
+            items.insert(0, {
+                "id": "tx-built-in-" + chapter,
+                "subject": subject, "chapter": chapter,
+                "name": "Existing TX revision notes (" + chapter + ")",
+                "filename": "TX_notes_" + chapter + ".md",
+                "mime": "text/plain; charset=utf-8",
+                "bytes": 0, "created_at": "", "builtin": True,
+                "view_url": "/api/study-board/builtin/tx/" + chapter,
+            })
+    return jsonify({"documents": items})
+
+
+@board.get("/api/study-board/builtin/tx/<code>")
+def existing_tx_note(code):
+    from tx_hub import STUDY_NOTES
+    if code not in STUDY_NOTES:
+        abort(404)
+    text = "\n\n".join("## " + title + "\n\n" + explanation
+                      for title, explanation in STUDY_NOTES[code])
+    response = send_file(
+        __import__("io").BytesIO(text.encode("utf-8")),
+        mimetype="text/plain; charset=utf-8", download_name="TX_notes_" + code + ".md",
+    )
+    response.headers["Cache-Control"] = "private, no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 @board.post("/api/study-board/documents")
