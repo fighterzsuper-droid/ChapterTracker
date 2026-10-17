@@ -49,4 +49,55 @@ with sync_playwright() as p:
     assert page.locator(".board-pane-sheet").is_visible()
     page.locator("[data-layout=split]").click()
     print("Browser smoke test: private login, editor and view toggles passed")
+    # Verify an actual XLSX can be imported into the in-app workbook model.
+    import base64
+    excel64 = page.evaluate("""() => {
+      const source = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(source, XLSX.utils.aoa_to_sheet([
+        ["Topic", "Hours"], ["Audit planning", 2], ["Evidence", 3],
+        ["Total", {f:"SUM(B2:B3)", v:5}]
+      ]), "Revision");
+      return XLSX.write(source, {bookType:"xlsx", type:"base64"});
+    }""")
+    page.locator("#board-import-xlsx").set_input_files({
+        "name": "revision.xlsx",
+        "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "buffer": base64.b64decode(excel64),
+    })
+    page.wait_for_timeout(4500)
+    import_status = page.locator("#board-sheet-status").inner_text()
+    print("After XLSX import:", import_status)
+    assert "imported" in import_status.lower() or "opened" in import_status.lower(), import_status
+    with page.expect_download(timeout=20000) as received:
+        page.locator("#board-export-xlsx").click()
+    download = received.value
+    assert download.suggested_filename.endswith(".xlsx")
+
+    # Build a tiny valid PDF in memory and check that PDF.js can render it.
+    stream = b"BT /F1 20 Tf 72 710 Td (Jay PDF Study Board) Tj ET"
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+        b"<< /Length " + str(len(stream)).encode() + b" >>\\nstream\\n" + stream + b"\\nendstream",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+    ]
+    contents = bytearray(b"%PDF-1.4\\n")
+    starts = [0]
+    for i, obj in enumerate(objects, 1):
+        starts.append(len(contents))
+        contents.extend(str(i).encode() + b" 0 obj\\n" + obj + b"\\nendobj\\n")
+    xref_at = len(contents)
+    contents.extend(b"xref\\n0 6\\n0000000000 65535 f \\n")
+    for offset in starts[1:]:
+        contents.extend(f"{offset:010} 00000 n \\n".encode())
+    contents.extend(b"trailer\\n<< /Size 6 /Root 1 0 R >>\\nstartxref\\n" +
+                    str(xref_at).encode() + b"\\n%%EOF")
+    page.locator("#board-upload").set_input_files({
+        "name": "study-page.pdf", "mimeType": "application/pdf", "buffer": bytes(contents)
+    })
+    page.locator(".board-pdf-page canvas").first.wait_for(state="visible", timeout=35000)
+    page.locator("[data-pdf-zoom-in]").click()
+    assert page.locator("#board-pdf-zoom").input_value() != "fit"
+    print("Verified XLSX import/export, PDF rendering and PDF zoom")
     browser.close()
