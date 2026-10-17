@@ -84,6 +84,7 @@ def topics():
     for r in rows:
         steps=''.join('<span class="'+("done" if r[k] else "")+'">'+label+'</span>' for k,label in [("taught","Taught"),("tested","Tested"),("marked","Marked"),("corrected","Corrected"),("retested","Retested"),("applied","Applied")])
         notes='<a class="button ghost" href="/tx/notes/'+escape(r["code"])+'">Study notes</a>' if r["code"] in ("1A","1B","1C","1D","1E") else ""
+        notes+='<a class="button ghost" href="/study-board?subject=TX&amp;chapter='+escape(r["code"])+'">Study Board · PDF + Excel</a>'
         cards.append('<article class="card chapter-card"><span class="eyebrow">PART '+escape(r["code"])+'</span><h2>'+escape(r["title"])+'</h2><div class="chips"><span class="chip '+("yes" if r["notes_created"] else "no")+'">'+("Notes available" if r["notes_created"] else "Notes not created")+'</span><span class="chip '+("progress" if r["status"]!="Not Started" else "no")+'">'+escape(r["status"])+'</span></div><div class="steps">'+steps+'</div>'+notes+'</article>')
     return page("TX Syllabus & Topic Progress",'<div class="info-box">FA2025 teaching roadmap, not Kaplan chapter numbering. Includes income tax, CGT, IHT, corporation tax and VAT. Notes available is not topic completion.</div><div class="chapter-grid">'+''.join(cards)+'</div>')
 
