@@ -1,7 +1,5 @@
 # Study databases and hosting secrets must NEVER be committed
-aa_hub.db
-tx_hub.db
-study_time.db
+*.db
 *.db-shm
 *.db-wal
 .env
