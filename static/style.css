@@ -180,3 +180,72 @@ main:has(.board-root){max-width:none;padding:24px 18px}
 @media(max-width:580px){main:has(.board-root){padding:12px}.board-stage{height:680px}.board-heading-actions{width:100%}.board-pane-toolbar{gap:6px}.board-sheet-toolbar input{width:100px}.board-toolbar .board-status{width:100%}}
 
 .board-reader-find[hidden],.board-reader-scroll[hidden]{display:none!important}
+
+/* Spacious Study Board workspace — expand the entire board or either pane. */
+.board-stage{height:clamp(640px,calc(100dvh - 230px),1400px)}
+.board-root.board-library-hidden .board-library{display:none}
+.board-root.board-library-hidden .board-main{grid-template-columns:minmax(0,1fr)}
+.board-pane-expand{font-size:11px;min-height:29px;padding:5px 8px}
+.board-pane-expand[aria-pressed=true]{background:#2e68ba;border-color:#5892e7}
+.board-split-handle{width:12px}
+body.board-fullscreen-open{overflow:hidden!important}
+.board-root.board-expanded{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100dvh;
+  max-height:100dvh;
+  box-sizing:border-box;
+  z-index:10000;
+  margin:0;
+  padding:10px 12px;
+  background:#0b1527;
+  overflow:hidden;
+  gap:8px;
+}
+.board-root.board-expanded .board-heading,
+.board-root.board-expanded .board-footnote{display:none}
+.board-root.board-expanded .board-toolbar{flex:none;padding:7px 10px}
+.board-root.board-expanded .board-main{
+  flex:1;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  min-height:0;
+  overflow:hidden;
+  gap:8px;
+}
+.board-root.board-expanded .board-stage{height:100%;min-height:0;border-radius:9px}
+.board-root.board-expanded:not(.board-library-hidden) .board-main{
+  grid-template-columns:210px minmax(0,1fr)
+}
+.board-root.board-expanded:not(.board-library-hidden) .board-library{
+  display:block;
+  height:100%;
+  min-height:0;
+  max-height:none;
+}
+.board-root.board-expanded #board-expand-view{
+  background:#2e68ba;
+  border-color:#5892e7
+}
+.board-root.board-expanded .board-notes-editor,
+.board-root.board-expanded .board-sheet-editor,
+.board-root.board-expanded .board-reader-scroll{min-height:0}
+@media(max-width:830px){
+  .board-stage{height:800px}
+  .board-root.board-expanded:not(.board-library-hidden) .board-main{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:auto minmax(0,1fr)
+  }
+  .board-root.board-expanded:not(.board-library-hidden) .board-library{
+    max-height:120px;
+    overflow:auto
+  }
+  .board-root.board-expanded .board-stage{height:100%}
+}
+@media(max-width:580px){
+  .board-stage{height:750px}
+  .board-root.board-expanded{padding:6px}
+  .board-root.board-expanded .board-toolbar{max-height:135px;overflow:auto}
+  .board-pane-expand{padding:5px;font-size:10px}
+}
