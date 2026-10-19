@@ -418,25 +418,105 @@
     await openDocument(data.document);
     status(file.name + " added to chapter " + chapter);
   }
+  let expanded = false;
+  let previousLayout = "split";
+  let previousLibraryHidden = false;
+
+  function refreshPanelSizes() {
+    // Give the DOM a frame to complete flex/grid changes before recalculating
+    // the fitted PDF width and informing Univer of its new viewport size.
+    requestAnimationFrame(() => {
+      if (pdf?.document && pdf.zoomMode === "fit") pdf.updateZoom();
+      window.dispatchEvent(new Event("resize"));
+    });
+  }
+
   function setLayout(which) {
+    if (!["split", "pdf", "sheet"].includes(which)) return;
     const stage = q("[data-board-stage]");
     stage.dataset.layout = which;
-    q("[data-layout=split]").setAttribute("aria-pressed", String(which === "split"));
-    q("[data-layout=pdf]").setAttribute("aria-pressed", String(which === "pdf"));
-    q("[data-layout=sheet]").setAttribute("aria-pressed", String(which === "sheet"));
-    setTimeout(() => {
-      if (pdf?.zoomMode === "fit") pdf.updateZoom();
-      window.dispatchEvent(new Event("resize"));
-    }, 80);
+    for (const button of document.querySelectorAll("[data-layout]")) {
+      button.setAttribute("aria-pressed", String(which === button.dataset.layout));
+    }
+    updateExpandControls();
+    refreshPanelSizes();
   }
+
+  function setLibraryHidden(hidden) {
+    root.classList.toggle("board-library-hidden", hidden);
+    const control = el("board-toggle-library");
+    control.textContent = hidden ? "Show library" : "Hide library";
+    control.setAttribute("aria-pressed", String(hidden));
+    control.setAttribute("aria-expanded", String(!hidden));
+    refreshPanelSizes();
+  }
+
+  function updateExpandControls() {
+    const layout = q("[data-board-stage]").dataset.layout;
+    const mainButton = el("board-expand-view");
+    mainButton.textContent = expanded ? "↙ Restore view" : "⛶ Expand view";
+    mainButton.title = expanded ? "Return to regular Study Board" : "Make the Study Board fill this browser window";
+    mainButton.setAttribute("aria-pressed", String(expanded));
+    const readerButton = el("board-expand-reader");
+    const sheetButton = el("board-expand-sheet");
+    const readerExpanded = expanded && layout === "pdf";
+    const sheetExpanded = expanded && layout === "sheet";
+    readerButton.textContent = readerExpanded ? "↙ Restore notes" : "⛶ Expand notes";
+    sheetButton.textContent = sheetExpanded ? "↙ Restore sheet" : "⛶ Expand sheet";
+    readerButton.setAttribute("aria-pressed", String(readerExpanded));
+    sheetButton.setAttribute("aria-pressed", String(sheetExpanded));
+  }
+
+  function setExpanded(want, pane = null) {
+    if (want && !expanded) {
+      previousLayout = q("[data-board-stage]").dataset.layout;
+      previousLibraryHidden = root.classList.contains("board-library-hidden");
+      expanded = true;
+      root.classList.add("board-expanded");
+      document.body.classList.add("board-fullscreen-open");
+      setLibraryHidden(true);
+    } else if (!want && expanded) {
+      expanded = false;
+      root.classList.remove("board-expanded");
+      document.body.classList.remove("board-fullscreen-open");
+      setLibraryHidden(previousLibraryHidden);
+      setLayout(previousLayout);
+    }
+    if (want && pane) setLayout(pane);
+    updateExpandControls();
+    refreshPanelSizes();
+  }
+
+  function togglePaneExpanded(pane) {
+    if (expanded && q("[data-board-stage]").dataset.layout === pane) {
+      setExpanded(false);
+    } else {
+      setExpanded(true, pane);
+    }
+  }
+
   function wireSplit() {
     const handle = el("board-split-handle"), stage = q("[data-board-stage]");
     let pointer = null;
+    const storageKey = "jay-board-reader-width";
     function setPercentage(value) {
-      const percent = Math.max(22, Math.min(78, value));
+      const percent = Math.max(15, Math.min(85, Number(value) || 50));
       stage.style.setProperty("--reader-percent", percent + "%");
       handle.setAttribute("aria-valuenow", String(Math.round(percent)));
+      return percent;
     }
+    function remember() {
+      try { localStorage.setItem(storageKey, handle.getAttribute("aria-valuenow")); }
+      catch (_) { /* Private browsing may block persistent preferences */ }
+      refreshPanelSizes();
+    }
+    try {
+      const preference = localStorage.getItem(storageKey);
+      if (preference && Number.isFinite(Number(preference))) setPercentage(preference);
+      else setPercentage(50);
+    } catch (_) { setPercentage(50); }
+    handle.setAttribute("aria-valuemin", "15");
+    handle.setAttribute("aria-valuemax", "85");
     function move(event) {
       if (pointer === null || event.pointerId !== pointer) return;
       const box = stage.getBoundingClientRect();
@@ -448,13 +528,22 @@
       handle.setPointerCapture(pointer);
     });
     handle.addEventListener("pointermove", move);
-    handle.addEventListener("pointerup", () => { pointer = null; });
+    handle.addEventListener("pointerup", () => {
+      if (pointer !== null) remember();
+      pointer = null;
+    });
     handle.addEventListener("pointercancel", () => { pointer = null; });
     handle.addEventListener("keydown", event => {
       if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         event.preventDefault();
         const present = parseFloat(stage.style.getPropertyValue("--reader-percent") || "50");
         setPercentage(present + (event.key === "ArrowLeft" ? -5 : 5));
+        remember();
+      }
+      if (event.key === "Home" || event.key === "End") {
+        event.preventDefault();
+        setPercentage(event.key === "Home" ? 15 : 85);
+        remember();
       }
     });
   }
@@ -469,6 +558,19 @@
     for (const button of document.querySelectorAll("[data-layout]")) {
       button.addEventListener("click", () => setLayout(button.dataset.layout));
     }
+    el("board-expand-view").addEventListener("click", () => setExpanded(!expanded));
+    el("board-expand-reader").addEventListener("click", () => togglePaneExpanded("pdf"));
+    el("board-expand-sheet").addEventListener("click", () => togglePaneExpanded("sheet"));
+    el("board-toggle-library").addEventListener("click", () =>
+      setLibraryHidden(!root.classList.contains("board-library-hidden")));
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && expanded) {
+        event.preventDefault();
+        setExpanded(false);
+        el("board-expand-view").focus();
+      }
+    });
+    updateExpandControls();
     el("board-upload").addEventListener("change", async event => {
       try { await uploadDocument(event.target.files[0]); }
       catch (e) { status(errorMessage(e), true); }
