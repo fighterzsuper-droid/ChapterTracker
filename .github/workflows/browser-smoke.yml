@@ -2,7 +2,7 @@ name: Browser Study Board Check
 
 on:
   push:
-    branches: ["feature/study-board-pdf-spreadsheet"]
+    branches: ["feature/study-board-pdf-spreadsheet", "feature/expand-study-board"]
   workflow_dispatch:
 
 jobs:
