@@ -79,6 +79,15 @@ Owner: Jayakiran (Jay). This is **Jay's project only**; do not mix it up with hi
 - The Study Board must count focused study time under the correct AA/TX subject without counting background browser tabs.
 - Status: implementation staged on feature branch. Separate hosting deployment and private-data persistence tests remain necessary before claiming the live website has changed.
 
+## Study Board expansion — 2026-10-19
+- An **Expand view** control must make the complete PDF/notes-and-spreadsheet workspace fill the browser viewport while retaining access to the tools.
+- Individual **Expand notes** and **Expand sheet** controls must maximize either pane, with a one-click restore to the previous split or single-pane layout.
+- **Hide library / Show library** must allow the note and spreadsheet panes to use the width previously taken by the chapter library.
+- The split divider must remain draggable/keyboard accessible, support asymmetric widths (15%–85%), and remember the user's chosen width.
+- Escape must exit expanded mode and restore the prior layout without clearing unsaved content.
+- Ordinary non-expanded Study Board should use more vertical screen height.
+- Preserve AA/TX focus timer behavior and note/workbook data without migration or resets.
+
 ## Change log
 - 2026-10-17: Added new Study Board requirements and implementation scope: PDF reader, chapter notes, editable Univer spreadsheet, XLSX import/export and split view, retaining private storage.
 - 2026-10-17: User authorised preparing all clean Study Hub files. Complete project source, password login, persistent AA/TX/time storage, Kuwait Self Overview, deployment manifest, host audit, SQLite backup utility and test suite staged in PR #3. Live Bot-Hosting files and databases untouched.
