@@ -122,3 +122,17 @@ In addition to the usual Python backend, Study Board uses pinned public-CDN
 versions of PDF.js, Univer, and SheetJS. External CDN access is required.
 See \`deployment/BOT_HOSTING_SETUP.md\` and \`deployment/manifest.json\`.
 
+
+### Expanded reading and spreadsheet workspace
+
+In **Study Board**, choose **Expand view** to fill the available browser window
+with the PDF/notes pane and editable spreadsheet simultaneously. Choose
+**Expand notes** or **Expand sheet** to maximize either side. Click the
+corresponding Restore button (or press Escape) to return to your previous
+layout. Hide the chapter library to reclaim more horizontal space. Drag the
+center divider to allocate from 15% to 85% of the width to either side; the
+browser remembers the last width for subsequent study sessions.
+
+The normal Study Board is also taller to make reading, writing and spreadsheet
+work more comfortable without activating expanded mode. The expanded mode
+does not change any of your stored notes, workbook data or focus time.

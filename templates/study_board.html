@@ -32,6 +32,11 @@
       <button type="button" class="board-button board-light" data-layout="sheet" aria-pressed="false">Spreadsheet</button>
     </div>
     <div class="board-toolbar-group">
+      <span class="board-group-label">Space</span>
+      <button type="button" class="board-button board-light" id="board-expand-view" aria-pressed="false" title="Expand Study Board to use the entire browser window">⛶ Expand view</button>
+      <button type="button" class="board-button board-light" id="board-toggle-library" aria-pressed="false" title="Hide or show the chapter library">Hide library</button>
+    </div>
+    <div class="board-toolbar-group">
       <span class="board-group-label">Library</span>
       <label for="board-upload" class="board-button board-light">Upload PDF / Notes</label>
       <input id="board-upload" type="file" accept=".pdf,.txt,.md,.csv,.xlsx,.xls" hidden>
@@ -87,6 +92,7 @@
             <button type="button" class="board-tool-icon" data-pdf-zoom-in title="Zoom in" aria-label="Zoom in">+</button>
             <button type="button" class="board-tool-icon" data-pdf-rotate title="Rotate PDF clockwise">⟳</button>
             <button type="button" class="board-tool-icon" data-pdf-download title="Download selected file">↓</button>
+            <button type="button" class="board-button board-light board-pane-expand" id="board-expand-reader" title="Expand PDF or notes to fill the screen; click again to restore" aria-pressed="false">⛶ Expand notes</button>
           </div>
         </div>
         <div class="board-reader-find">
@@ -124,6 +130,7 @@
             <input id="board-workbook-title" type="text" maxlength="120" aria-label="Workbook name" value="Study workbook">
           </div>
           <div class="board-toolbar-main board-sheet-actions">
+            <button type="button" class="board-button board-light board-pane-expand" id="board-expand-sheet" title="Expand spreadsheet to fill the screen; click again to restore" aria-pressed="false">⛶ Expand sheet</button>
             <button id="board-save-workbook" type="button" class="board-button">Save</button>
             <button id="board-export-xlsx" type="button" class="board-button board-light" title="Export workbook to XLSX">Export .xlsx</button>
             <a href="https://www.microsoft365.com/launch/excel" target="_blank" rel="noopener noreferrer" class="board-button board-light" title="For full Microsoft Excel features, open Excel for the web">Excel for web ↗</a>

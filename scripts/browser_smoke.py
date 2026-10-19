@@ -48,6 +48,52 @@ with sync_playwright() as p:
     page.locator("[data-layout=sheet]").click()
     assert page.locator(".board-pane-sheet").is_visible()
     page.locator("[data-layout=split]").click()
+    # Expand the entire workspace: the PDF and spreadsheet must grow together.
+    regular_height = page.locator(".board-stage").bounding_box()["height"]
+    page.locator("#board-expand-view").click()
+    assert "board-expanded" in (page.locator(".board-root").get_attribute("class") or "")
+    assert page.locator("#board-expand-view").get_attribute("aria-pressed") == "true"
+    assert page.locator(".board-library").is_hidden()
+    expanded_height = page.locator(".board-stage").bounding_box()["height"]
+    assert expanded_height > regular_height + 20, (regular_height, expanded_height)
+    assert page.locator("#board-sheet-editor").is_visible()
+    assert page.locator("#board-pdf-scroll").is_visible()
+
+    # In expanded mode, the Library can be restored without shrinking panels
+    # to their pre-expanded height.
+    page.locator("#board-toggle-library").click()
+    assert page.locator(".board-library").is_visible()
+    page.locator("#board-toggle-library").click()
+    assert page.locator(".board-library").is_hidden()
+    page.locator("#board-expand-view").click()
+    assert "board-expanded" not in (page.locator(".board-root").get_attribute("class") or "")
+    assert page.locator(".board-library").is_visible()
+    assert page.locator(".board-stage").get_attribute("data-layout") == "split"
+
+    # Expand either panel, then restore with the same button or Escape.
+    page.locator("#board-expand-reader").click()
+    assert "board-expanded" in (page.locator(".board-root").get_attribute("class") or "")
+    assert page.locator(".board-stage").get_attribute("data-layout") == "pdf"
+    assert page.locator(".board-pane-sheet").is_hidden()
+    page.locator("#board-expand-reader").click()
+    assert page.locator(".board-stage").get_attribute("data-layout") == "split"
+    assert page.locator(".board-pane-sheet").is_visible()
+
+    page.locator("#board-expand-sheet").click()
+    assert page.locator(".board-stage").get_attribute("data-layout") == "sheet"
+    assert page.locator(".board-pane-pdf").is_hidden()
+    page.keyboard.press("Escape")
+    assert page.locator(".board-stage").get_attribute("data-layout") == "split"
+    assert "board-expanded" not in (page.locator(".board-root").get_attribute("class") or "")
+    assert page.locator("#board-sheet-editor").evaluate("(el) => el.children.length > 0")
+
+    # Resizing the divider is keyboard accessible and persists the preference.
+    page.locator("#board-split-handle").focus()
+    page.keyboard.press("ArrowRight")
+    width = page.locator("#board-split-handle").get_attribute("aria-valuenow")
+    assert float(width) > 50
+    assert page.evaluate("localStorage.getItem('jay-board-reader-width')") == width
+    print("Expansion/restore, library visibility, keyboard escape and splitter persistence passed")
     print("Browser smoke test: private login, editor and view toggles passed")
     # Verify an actual XLSX can be imported into the in-app workbook model.
     import base64
