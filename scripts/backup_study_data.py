@@ -36,9 +36,11 @@ def backup(root, output):
         name: Path(os.environ[env_var]).resolve() if os.getenv(env_var) else (root / name)
         for name, env_var in DATABASES.items()
     }
+    board_directory = Path(os.environ["BOARD_STORAGE_PATH"]).resolve() if os.getenv("BOARD_STORAGE_PATH") else root / "board_data"
+    sources["study_board.sqlite3"] = board_directory / "study_board.sqlite3"
     present = {name: path for name, path in sources.items() if path.is_file()}
-    if not present:
-        raise FileNotFoundError("No study databases found in configured paths or " + str(root))
+    if not present and not (board_directory / "documents").is_dir():
+        raise FileNotFoundError("No study databases or Study Board files found in configured paths or " + str(root))
     os.umask(0o077)
     with tempfile.TemporaryDirectory() as temp:
         snapshots = []
@@ -65,6 +67,14 @@ def backup(root, output):
         with ZipFile(output, "x", compression=ZIP_DEFLATED) as z:
             for p in snapshots:
                 z.write(p, p.name)
+            board_files = []
+            doc_dir = board_directory / "documents"
+            if doc_dir.is_dir():
+                for item in doc_dir.iterdir():
+                    if item.is_file() and not item.is_symlink():
+                        z.write(item, "study-board/documents/" + item.name)
+                        board_files.append(item.name)
+            manifest["study_board_uploaded_documents"] = board_files
             z.writestr("backup_manifest.json", json.dumps(manifest, indent=2))
     return output, list(present)
 

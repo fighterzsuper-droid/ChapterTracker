@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %}Study Board — Jay Study Hub{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/@univerjs/preset-sheets-core@0.25.1/lib/index.css">
+{% endblock %}
+{% block heading %}Study Board{% endblock %}
+{% block subheading %}Read PDFs, take chapter notes, and work in an editable spreadsheet — side by side.{% endblock %}
+{% block content %}
+<section class="board-root" data-subject="{{ subject }}" data-chapter="{{ chapter }}">
+  <header class="board-heading">
+    <div>
+      <span class="eyebrow">PRIVATE CHAPTER WORKSPACE</span>
+      <h2><span data-board-subject>{{ subject }}/{{ 'F8' if subject == 'AA' else 'F6' }}</span>
+        <span class="board-heading-sep">/</span> Chapter <span data-board-chapter>{{ chapter }}</span></h2>
+      <p class="muted">Documents and workbooks are kept in the Study Hub's private storage, not in GitHub.</p>
+    </div>
+    <div class="board-heading-actions">
+      <label>Subject
+        <select id="board-subject" aria-label="Study subject"><option value="AA" {% if subject == 'AA' %}selected{% endif %}>Audit &amp; Assurance</option><option value="TX" {% if subject == 'TX' %}selected{% endif %}>Taxation</option></select>
+      </label>
+      <label>Chapter
+        <select id="board-chapter" aria-label="Study chapter"></select>
+      </label>
+      <a class="board-button board-light" href="{{ '/' if subject == 'AA' else '/tx/topics' }}">View syllabus</a>
+    </div>
+  </header>
+  <div class="board-toolbar" role="toolbar" aria-label="Study board options">
+    <div class="board-toolbar-group">
+      <span class="board-group-label">Layout</span>
+      <button type="button" class="board-button" data-layout="split" aria-pressed="true">Split view</button>
+      <button type="button" class="board-button board-light" data-layout="pdf" aria-pressed="false">PDF / Notes</button>
+      <button type="button" class="board-button board-light" data-layout="sheet" aria-pressed="false">Spreadsheet</button>
+    </div>
+    <div class="board-toolbar-group">
+      <span class="board-group-label">Library</span>
+      <label for="board-upload" class="board-button board-light">Upload PDF / Notes</label>
+      <input id="board-upload" type="file" accept=".pdf,.txt,.md,.csv,.xlsx,.xls" hidden>
+      <label for="board-import-xlsx" class="board-button board-light">Import Excel</label>
+      <input id="board-import-xlsx" type="file" accept=".xlsx,.xls,.csv" hidden>
+      <button id="board-new-note" class="board-button board-light" type="button">New note</button>
+      <button id="board-new-workbook" class="board-button board-light" type="button">New workbook</button>
+    </div>
+    <span class="board-status" data-board-status role="status" aria-live="polite">Preparing your workspace…</span>
+  </div>
+
+  <div class="board-main">
+    <aside class="board-library" aria-label="Chapter library">
+      <div class="board-library-head"><h3>Chapter library</h3><span class="muted" id="board-file-count"></span></div>
+      <p class="board-subheading">PDFs and notes</p>
+      <div class="board-file-list" id="board-documents">
+        <p class="muted">Loading…</p>
+      </div>
+      <p class="board-subheading">Spreadsheets</p>
+      <div class="board-file-list" id="board-workbooks">
+        <p class="muted">Loading…</p>
+      </div>
+      {% if subject == 'TX' %}
+      <div class="board-library-tip">Existing Tax notes can also be read from the <a href="/tx/topics">TX Chapters page</a>.</div>
+      {% else %}
+      <div class="board-library-tip">You can upload your own chapter PDFs, mark-up notes or textbooks privately. Licensed books are <strong>not</strong> uploaded to public GitHub.</div>
+      {% endif %}
+    </aside>
+
+    <section class="board-stage" data-board-stage data-layout="split" aria-label="Reader and spreadsheet">
+      <section class="board-pane board-pane-pdf" aria-label="PDF and notes reader">
+        <div class="board-pane-toolbar" role="toolbar" aria-label="PDF controls">
+          <div class="board-toolbar-main">
+            <strong class="board-pane-title" id="board-pdf-title">PDF / Notes reader</strong>
+            <button type="button" class="board-tool-icon" data-pdf-prev title="Previous PDF page" aria-label="Previous page">‹</button>
+            <input data-pdf-page aria-label="Current PDF page" class="board-page-input" inputmode="numeric" value="1" type="number" min="1">
+            <span class="board-of">of <span data-pdf-total>0</span></span>
+            <button type="button" class="board-tool-icon" data-pdf-next title="Next PDF page" aria-label="Next page">›</button>
+          </div>
+          <div class="board-toolbar-main">
+            <button type="button" class="board-tool-icon" data-pdf-zoom-out title="Zoom out" aria-label="Zoom out">−</button>
+            <label for="board-pdf-zoom" class="sr-only">PDF zoom</label>
+            <select id="board-pdf-zoom" aria-label="PDF zoom">
+              <option value="fit">Fit width</option>
+              <option value="0.5">50%</option>
+              <option value="0.75">75%</option>
+              <option value="1">100%</option>
+              <option value="1.25">125%</option>
+              <option value="1.5">150%</option>
+              <option value="2">200%</option>
+              <option value="3">300%</option>
+            </select>
+            <button type="button" class="board-tool-icon" data-pdf-zoom-in title="Zoom in" aria-label="Zoom in">+</button>
+            <button type="button" class="board-tool-icon" data-pdf-rotate title="Rotate PDF clockwise">⟳</button>
+            <button type="button" class="board-tool-icon" data-pdf-download title="Download selected file">↓</button>
+          </div>
+        </div>
+        <div class="board-reader-find">
+          <label for="board-search-pdf" class="sr-only">Search PDF text</label>
+          <input id="board-search-pdf" type="search" placeholder="Find text in PDF…">
+          <button type="button" class="board-button board-light" id="board-find-button">Find next</button>
+          <span id="board-pdf-message" class="muted">Choose a PDF from the chapter library.</span>
+        </div>
+        <div class="board-reader-scroll" id="board-pdf-scroll" tabindex="0" aria-label="PDF pages, scroll to read">
+          <div class="board-empty-reader">
+            <div class="board-empty-symbol">PDF</div>
+            <h3>Read your chapter material here</h3>
+            <p>Upload a PDF or select an existing file from the chapter library. Navigate pages, scroll continuously and zoom in or out.</p>
+          </div>
+        </div>
+        <div class="board-notes-editor" id="board-note-editor" hidden>
+          <label for="board-note-text" class="sr-only">Editable study notes</label>
+          <textarea id="board-note-text" spellcheck="true" placeholder="Start writing chapter notes…"></textarea>
+          <div class="board-note-foot">
+            <span id="board-note-status" class="muted">Save your chapter notes to keep them.</span>
+            <button type="button" id="board-save-note" class="board-button">Save note</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="board-split-handle" id="board-split-handle" role="separator" aria-label="Drag or use arrow keys to resize PDF and spreadsheet" tabindex="0" aria-orientation="vertical">
+        <div class="board-grip"></div>
+      </div>
+
+      <section class="board-pane board-pane-sheet" aria-label="Excel-style editable spreadsheet">
+        <div class="board-pane-toolbar board-sheet-toolbar">
+          <div class="board-toolbar-main">
+            <strong class="board-pane-title">Spreadsheet</strong>
+            <label for="board-workbook-title" class="sr-only">Workbook name</label>
+            <input id="board-workbook-title" type="text" maxlength="120" aria-label="Workbook name" value="Study workbook">
+          </div>
+          <div class="board-toolbar-main board-sheet-actions">
+            <button id="board-save-workbook" type="button" class="board-button">Save</button>
+            <button id="board-export-xlsx" type="button" class="board-button board-light" title="Export workbook to XLSX">Export .xlsx</button>
+            <a href="https://www.microsoft365.com/launch/excel" target="_blank" rel="noopener noreferrer" class="board-button board-light" title="For full Microsoft Excel features, open Excel for the web">Excel for web ↗</a>
+          </div>
+        </div>
+        <div class="board-sheet-status" id="board-sheet-status" role="status" aria-live="polite">
+          Loading spreadsheet editor…</div>
+        <div class="board-sheet-editor" id="board-sheet-editor" aria-label="Editable workbook grid"></div>
+      </section>
+    </section>
+  </div>
+  <footer class="board-footnote">
+    <span>Focused time counts only while this Study Board tab is visible and the browser window is focused. Quiet reading and spreadsheet work count.</span>
+    <span>Excel-like editor uses Univer Sheets. Full Microsoft Excel features and perfect XLSX fidelity require Excel for the web or desktop.</span>
+  </footer>
+</section>
+
+<!-- Fixed-version browser packages for the built-in spreadsheet. -->
+<script defer src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script defer src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script defer src="{{ url_for('static', filename='univer_react_compat.js') }}"></script>
+<script defer src="https://unpkg.com/rxjs@7.8.1/dist/bundles/rxjs.umd.min.js"></script>
+<script defer src="https://unpkg.com/echarts@5.6.0/dist/echarts.min.js"></script>
+<script defer src="https://unpkg.com/@univerjs/presets@0.25.1/lib/umd/index.js"></script>
+<script defer src="https://unpkg.com/@univerjs/preset-sheets-core@0.25.1/lib/umd/index.js"></script>
+<script defer src="https://unpkg.com/@univerjs/preset-sheets-core@0.25.1/lib/umd/locales/en-US.js"></script>
+<script defer src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script defer src="{{ url_for('static', filename='study_board.js') }}"></script>
+{% endblock %}

@@ -66,6 +66,20 @@ Owner: Jayakiran (Jay). This is **Jay's project only**; do not mix it up with hi
 - Available hosting backup/persistent storage details.
 - Any authentication/privacy preferences (recommended for a secure private dashboard).
 
+## Chapter Study Board — requested 2026-10-17
+- Add **Study Board** link in sidebar and from each AA/F8 chapter and TX/F6 topic.
+- A private chapter resource library for PDFs, text/Markdown study notes, and workbooks.
+- Upload PDFs and notes directly through the signed-in site; never commit the licensed AA study text/exam kit PDFs to public GitHub.
+- Full PDF reading UI with scrolling, page navigation, search, zoom in/out, fit width, Ctrl-scroll zoom, rotate, and download.
+- Built-in editable chapter notes plus access to the existing TX revision notes.
+- Excel-style spreadsheet editor powered by Univer Sheets with formulas, standard editing/formatting, sheet tabs and zoom, chapter-linked server persistence, autosave and explicit Save.
+- Import .xlsx/.xls/.csv and export basic .xlsx using SheetJS; **do not claim exact Microsoft Excel parity** (e.g. macros/VBA and advanced features are not fully supported). Offer "Excel for web" to use Microsoft's actual Excel when needed.
+- Resizable split view showing PDF/notes and spreadsheet at once, plus single-pane modes, responsive stacked view on mobile.
+- Uploaded documents, workbooks and metadata must remain private, excluded from Git and included in off-server backups using a persistent \`BOARD_STORAGE_PATH\`.
+- The Study Board must count focused study time under the correct AA/TX subject without counting background browser tabs.
+- Status: implementation staged on feature branch. Separate hosting deployment and private-data persistence tests remain necessary before claiming the live website has changed.
+
 ## Change log
+- 2026-10-17: Added new Study Board requirements and implementation scope: PDF reader, chapter notes, editable Univer spreadsheet, XLSX import/export and split view, retaining private storage.
 - 2026-10-17: User authorised preparing all clean Study Hub files. Complete project source, password login, persistent AA/TX/time storage, Kuwait Self Overview, deployment manifest, host audit, SQLite backup utility and test suite staged in PR #3. Live Bot-Hosting files and databases untouched.
 - 2026-10-17: Initial durable rebuild brief created based on Jay's requests in this chat. No host deletion authorised or executed.

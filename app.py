@@ -15,6 +15,7 @@ app = Flask(__name__)
 # Set a permanent FLASK_SECRET_KEY in the Bot-Hosting environment before launch.
 app.secret_key = os.getenv("FLASK_SECRET_KEY") or secrets.token_hex(32)
 app.config.update(
+    MAX_CONTENT_LENGTH=34 * 1024 * 1024,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.getenv("HUB_ALLOW_HTTP") != "1",
@@ -491,6 +492,8 @@ from study_time import study_time
 app.register_blueprint(study_time)
 from watcher import watcher
 app.register_blueprint(watcher)
+from board import board
+app.register_blueprint(board)
 from security import auth
 app.register_blueprint(auth)
 from restart_ui import restart_ui

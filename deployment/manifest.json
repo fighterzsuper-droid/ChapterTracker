@@ -26,27 +26,36 @@
     "templates/weaknesses.html",
     "static/style.css",
     "static/overview.js",
-    "static/study_time.js"
+    "static/study_time.js",
+    "board.py",
+    "static/pdf_viewer.js",
+    "static/study_board.js",
+    "static/univer_react_compat.js",
+    "templates/study_board.html"
   ],
   "keep_existing_private_files": [
     ".env",
     "aa_hub.db",
     "tx_hub.db",
-    "study_time.db"
+    "study_time.db",
+    "board_data/",
+    "board_data/study_board.sqlite3"
   ],
   "recommended_environment": [
     "HUB_ACCESS_PASSWORD or HUB_PASSWORD_HASH",
     "FLASK_SECRET_KEY",
     "AA_DB_PATH",
     "TX_DB_PATH",
-    "STUDY_TIME_DB_PATH"
+    "STUDY_TIME_DB_PATH",
+    "BOARD_STORAGE_PATH"
   ],
   "excluded_from_hosting": [
     "CricEdge Python modules",
     "players.db",
     "test modules",
     "GitHub workflows",
-    "docs"
+    "docs",
+    "Publicly committed copyrighted study PDFs; upload privately through Study Board"
   ],
   "safe_cutover": "backup and verify databases before replacing production files; do not delete private files"
 }

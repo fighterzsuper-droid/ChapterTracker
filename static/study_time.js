@@ -5,7 +5,8 @@
 
   // Statistics viewing is not studying. Avoid inflating totals while browsing charts.
   if (location.pathname === "/self-overview") return;
-  const subject = location.pathname.startsWith("/tx/") ? "TX" : "AA";
+  const subject = document.querySelector(".board-root")?.dataset.subject ||
+    (location.pathname.startsWith("/tx/") ? "TX" : "AA");
   const HEARTBEAT_MS = 10000;
   function makeId() {
     const bytes = new Uint8Array(16);

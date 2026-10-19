@@ -2,7 +2,7 @@ name: Verify Jay Study Hub
 
 on:
   push:
-    branches: [main, "feature/focused-study-timer", "rebuild/jay-study-hub-clean"]
+    branches: [main, "feature/focused-study-timer", "rebuild/jay-study-hub-clean", "feature/study-board-pdf-spreadsheet"]
   pull_request:
 
 jobs:
@@ -18,4 +18,11 @@ jobs:
       - name: Run regression tests
         run: python -m unittest discover -s tests -v
       - name: Validate Python syntax
-        run: python -m compileall -q app.py tx_hub.py study_time.py watcher.py
+        run: python -m compileall -q app.py tx_hub.py study_time.py watcher.py board.py security.py
+      - name: Check browser JavaScript syntax
+        run: |
+          node --check static/study_board.js
+          node --check static/pdf_viewer.js
+          node --check static/study_time.js
+      - name: Check pinned spreadsheet and PDF libraries
+        run: python scripts/check_board_assets.py
