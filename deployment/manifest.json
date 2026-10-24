@@ -31,7 +31,11 @@
     "static/pdf_viewer.js",
     "static/study_board.js",
     "static/univer_react_compat.js",
-    "templates/study_board.html"
+    "templates/study_board.html",
+    "fr_portal_v7.gz.part0",
+    "fr_portal_v7.gz.part1",
+    "fr_portal_v7.gz.part2",
+    "fr_portal_v7.gz.part3"
   ],
   "keep_existing_private_files": [
     ".env",

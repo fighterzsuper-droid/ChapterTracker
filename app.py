@@ -1,3 +1,4 @@
+import gzip
 import json
 import os
 import secrets
@@ -5,10 +6,11 @@ import sqlite3
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
-from flask import Flask, abort, flash, redirect, render_template, request, url_for
+from flask import Flask, Response, abort, flash, redirect, render_template, request, url_for
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.getenv("AA_DB_PATH", str(BASE_DIR / "aa_hub.db")))
+FR_PORTAL_PARTS = [BASE_DIR / f"fr_portal_v7.gz.part{i}" for i in range(4)]
 
 app = Flask(__name__)
 # Sessions are secret even when an operator has not yet configured the key.
@@ -475,6 +477,49 @@ def weaknesses():
     rows = conn.execute("SELECT * FROM weaknesses ORDER BY CASE WHEN status LIKE 'Open%' THEN 0 ELSE 1 END, id DESC").fetchall()
     conn.close()
     return render_template("weaknesses.html", weaknesses=rows)
+
+
+@app.route("/fr/")
+def fr_portal():
+    """Serve the self-contained FR/F7 portal behind the Study Hub login."""
+    try:
+        compressed = b"".join(path.read_bytes() for path in FR_PORTAL_PARTS)
+        html = gzip.decompress(compressed).decode("utf-8")
+    except (OSError, EOFError, UnicodeDecodeError):
+        abort(503)
+
+    # Standalone v7 contains a local demo login. The hosted version already
+    # sits behind security.py, so enter its dashboard directly and map logout
+    # back to the Study Hub session.
+    hosted_patch = """
+<script>
+window.addEventListener("load", function () {
+  try {
+    if (typeof portalSession !== "undefined") {
+      portalSession = {username: "jay", name: "Jayakiran"};
+    }
+    const login = document.getElementById("loginView");
+    const dash = document.getElementById("dashboardView");
+    if (login) login.classList.add("hiddenPortal");
+    if (dash) dash.classList.remove("hiddenPortal");
+    if (typeof showDashboard === "function") showDashboard("overview");
+    if (typeof portalLogout === "function") {
+      portalLogout = function () {
+        const form = document.createElement("form");
+        form.method = "post";
+        form.action = "/logout";
+        document.body.appendChild(form);
+        form.submit();
+      };
+    }
+  } catch (error) {
+    console.error("FR hosted-mode initialization failed", error);
+  }
+});
+</script>
+"""
+    html = html.replace("</body>", hosted_patch + "\n</body>")
+    return Response(html, mimetype="text/html")
 
 @app.route("/health")
 def health():

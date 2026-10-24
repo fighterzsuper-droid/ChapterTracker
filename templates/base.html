@@ -36,6 +36,7 @@
         <select id="subject-switch" aria-label="Switch ACCA subject" onchange="location.href=this.value" style="padding:10px 14px;border-radius:10px;border:1px solid #58708c;background:#1b2a40;color:white">
           <option value="/" selected>AA / F8</option>
           <option value="/tx/">TX / F6</option>
+          <option value="/fr/">FR / F7</option>
         </select>
         <a href="/admin/restart" style="padding:10px 14px;border-radius:10px;border:1px solid #58708c;color:inherit;text-decoration:none">Restart hosting</a>
         <form method="post" action="{{ url_for('auth.logout') }}" class="hub-logout"><button type="submit">Sign out</button></form>

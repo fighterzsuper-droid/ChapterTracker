@@ -1,4 +1,4 @@
-# Jay Study Hub — ACCA AA/F8 + TX/F6
+# Jay Study Hub — ACCA AA/F8 + TX/F6 + FR/F7
 
 Personal exam preparation website for **Jayakiran**, built with Python/Flask.
 This repository contains only Study Hub code, not the old CricEdge cricket bot.
@@ -22,13 +22,15 @@ This repository contains only Study Hub code, not the old CricEdge cricket bot.
 | TX practice | `/tx/quiz` | Initial diagnostic |
 | TX goals | `/tx/goals` | Daily tasks and study goals |
 | TX history/weaknesses | `/tx/history`, `/tx/weaknesses` | Progress logs |
+| FR practice portal | `/fr/` | FR/F7 mock exams, analytics, history, retests and Section C teacher-review workflow |
 | Self Overview | `/self-overview` | Kuwait clock, hourly and 7-day focus graphs |
 | Health check | `/health` | App up-status only |
 | Sign in/out | `/login`, `/logout` | Private personal access |
 
 ## File layout
 
-- `app.py`: entrypoint, AA pages, Flask configuration and blueprint registration.
+- `app.py`: entrypoint, AA pages, Flask configuration, FR portal route and blueprint registration.
+- `fr_portal_v7.gz.part0` … `part3`: compressed self-contained FR/F7 practice portal served at `/fr/`.
 - `tx_hub.py`: independent TX/F6 records and routes.
 - `study_time.py`: server-validated focus heartbeat ledger and Kuwait hourly buckets.
 - `watcher.py`: Self Overview charts and JSON API; **not** a separate bot process.
