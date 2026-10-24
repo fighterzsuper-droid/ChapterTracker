@@ -1,11 +1,11 @@
-# Study databases and hosting secrets must NEVER be committed
 *.db
 *.db-shm
 *.db-wal
-.env
-.env.*
 *.sqlite
 *.sqlite3
+*.legacy-purged
+.env
+.env.*
 __pycache__/
 *.pyc
 .pytest_cache/
@@ -15,5 +15,3 @@ backups/
 server_backups/
 *.zip
 *.tar.gz
-# Private chapter uploads and saved workbooks
-board_data/

@@ -1,28 +1,30 @@
-name: Verify Jay Study Hub
+name: Verify F7 Portal
 
 on:
   push:
-    branches: [main, "feature/focused-study-timer", "rebuild/jay-study-hub-clean", "feature/study-board-pdf-spreadsheet", "feature/expand-study-board"]
+    branches: [main]
   pull_request:
 
 jobs:
-  study-timer-tests:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install requirements
-        run: python -m pip install -r requirements.txt
-      - name: Run regression tests
-        run: python -m unittest discover -s tests -v
-      - name: Validate Python syntax
-        run: python -m compileall -q app.py tx_hub.py study_time.py watcher.py board.py security.py
-      - name: Check browser JavaScript syntax
+      - run: python -m pip install -r requirements.txt
+      - run: python -m py_compile app.py
+      - name: Verify FR portal package
         run: |
-          node --check static/study_board.js
-          node --check static/pdf_viewer.js
-          node --check static/study_time.js
-      - name: Check pinned spreadsheet and PDF libraries
-        run: python scripts/check_board_assets.py
+          python - <<'PY'
+          import gzip
+          from pathlib import Path
+          raw=b''.join(Path(f'fr_portal_v7.gz.part{i}').read_bytes() for i in range(4))
+          html=gzip.decompress(raw).decode('utf-8')
+          assert 'FR / F7' in html
+          assert 'Mock Exams' in html
+          assert 'timerBox' in html
+          assert 'Management' in html
+          print('F7 portal package OK:',len(html),'bytes')
+          PY

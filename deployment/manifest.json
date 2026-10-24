@@ -1,65 +1,27 @@
 {
-  "project": "Jay Study Hub",
+  "project": "ACCA FR/F7 Practice Portal",
   "owner": "Jayakiran",
   "startup": "app.py",
   "environment": "Bot-Hosting Python with HTTPS",
-  "timezone": "Asia/Kuwait",
   "runtime_files": [
     "app.py",
-    "tx_hub.py",
-    "security.py",
-    "study_time.py",
-    "watcher.py",
-    "restart_ui.py",
     "requirements.txt",
-    "templates/404.html",
-    "templates/attempt.html",
-    "templates/base.html",
-    "templates/chapters.html",
-    "templates/dashboard.html",
-    "templates/history.html",
-    "templates/login.html",
-    "templates/setup_required.html",
-    "templates/self_overview.html",
-    "templates/take_test.html",
-    "templates/tests.html",
-    "templates/weaknesses.html",
-    "static/style.css",
-    "static/overview.js",
-    "static/study_time.js",
-    "board.py",
-    "static/pdf_viewer.js",
-    "static/study_board.js",
-    "static/univer_react_compat.js",
-    "templates/study_board.html",
     "fr_portal_v7.gz.part0",
     "fr_portal_v7.gz.part1",
     "fr_portal_v7.gz.part2",
     "fr_portal_v7.gz.part3"
   ],
-  "keep_existing_private_files": [
+  "persistent_private_files": [
     ".env",
-    "aa_hub.db",
-    "tx_hub.db",
-    "study_time.db",
-    "board_data/",
-    "board_data/study_board.sqlite3"
+    "f7_portal.db",
+    "f7_portal.db.legacy-purged"
   ],
-  "recommended_environment": [
-    "HUB_ACCESS_PASSWORD or HUB_PASSWORD_HASH",
+  "required_environment": [
     "FLASK_SECRET_KEY",
-    "AA_DB_PATH",
-    "TX_DB_PATH",
-    "STUDY_TIME_DB_PATH",
-    "BOARD_STORAGE_PATH"
+    "F7_DB_PATH",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "GOOGLE_REDIRECT_URI"
   ],
-  "excluded_from_hosting": [
-    "CricEdge Python modules",
-    "players.db",
-    "test modules",
-    "GitHub workflows",
-    "docs",
-    "Publicly committed copyrighted study PDFs; upload privately through Study Board"
-  ],
-  "safe_cutover": "backup and verify databases before replacing production files; do not delete private files"
+  "legacy_data_policy": "F8/F6 data is intentionally purged on first F7-only startup at the owner's request."
 }
