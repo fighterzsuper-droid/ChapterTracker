@@ -454,9 +454,6 @@ def portal_html_for(user):
 #capturePrivacyShield .shieldCard{max-width:520px;padding:28px 32px;border:1px solid rgba(255,255,255,.25);border-radius:14px;background:rgba(9,35,55,.96);box-shadow:0 24px 70px rgba(0,0,0,.35)}
 #capturePrivacyShield h2{margin:0 0 8px;font-size:24px}
 #capturePrivacyShield p{margin:0;color:#d8e8f4;line-height:1.5}
-#captureWatermark{position:fixed;inset:0;z-index:2147483000;pointer-events:none;overflow:hidden;opacity:.15;display:none}
-body.hostedSecure #captureWatermark{display:block}
-#captureWatermark .wmTile{position:absolute;transform:rotate(-28deg);font:700 14px/1.35 Arial,Helvetica,sans-serif;color:#173a56;white-space:nowrap}
 @media print{body>*{display:none!important}body:after{content:"Printing disabled for this protected FR portal.";display:block!important;padding:40px;font:700 20px Arial;color:#111}}
 </style></head>""")
     patch = r"""
@@ -492,27 +489,12 @@ async function __saveHostedProfile(extra){
 }
 
 function __installCaptureProtection(){
-  document.body.classList.add('hostedSecure');
   var shield=document.getElementById('capturePrivacyShield');
   if(!shield){
     shield=document.createElement('div');
     shield.id='capturePrivacyShield';
-    shield.innerHTML='<div class="shieldCard"><h2>Protected content hidden</h2><p>Return to this tab to continue. The portal hides exam content whenever the tab is minimized, switched away from, or the browser window loses focus.</p></div>';
+    shield.innerHTML='<div class="shieldCard"><h2>Protected content hidden</h2><p>Return to this tab to continue. The portal hides exam content whenever the tab is minimized, switched away from, or the browser window loses focus. Browser pages cannot block OS-level screenshots while content is actively visible.</p></div>';
     document.body.appendChild(shield);
-  }
-  var wm=document.getElementById('captureWatermark');
-  if(!wm){
-    wm=document.createElement('div');wm.id='captureWatermark';document.body.appendChild(wm);
-  }
-  function rebuildWatermark(){
-    var p=window.__HOSTED_F7_USER__||{};
-    var text=((p.displayName||p.username||'Candidate')+' • '+(p.email||'')+' • '+new Date().toLocaleString()).trim();
-    wm.innerHTML='';
-    var cols=5,rows=6;
-    for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){
-      var t=document.createElement('div');t.className='wmTile';t.textContent=text;
-      t.style.left=(c*25-10)+'%';t.style.top=(r*20-5)+'%';wm.appendChild(t);
-    }
   }
   function protect(){
     shield.classList.add('active');
@@ -540,8 +522,6 @@ function __installCaptureProtection(){
       return false;
     }
   },true);
-  setInterval(rebuildWatermark,60000);
-  rebuildWatermark();
   if(document.hidden || !document.hasFocus()) protect(); else reveal();
 }
 
