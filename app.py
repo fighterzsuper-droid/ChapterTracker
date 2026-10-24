@@ -33,22 +33,6 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=timedelta(days=30),
 )
 
-@app.after_request
-def security_headers(response):
-    # Browser-level hardening. Note: ordinary websites cannot prevent an
-    # external OS screenshot/recorder while the page is visibly focused.
-    response.headers["Permissions-Policy"] = "display-capture=(), camera=(), microphone=()"
-    response.headers["X-Frame-Options"] = "DENY"
-    response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["Referrer-Policy"] = "same-origin"
-    response.headers["Cache-Control"] = "no-store, private, max-age=0"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Content-Security-Policy"] = (
-        "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; "
-        "form-action 'self' https://accounts.google.com"
-    )
-    return response
-
 def utc_now():
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
@@ -447,15 +431,7 @@ def portal_html_for(user):
         abort(503)
 
     profile = json.dumps(user_public(user), ensure_ascii=False).replace("</", "<\\/")
-    html = html.replace("</head>", """<style>
-#loginView{display:none!important}
-#capturePrivacyShield{position:fixed;inset:0;z-index:2147483646;background:#0d2941;color:#fff;display:none;align-items:center;justify-content:center;text-align:center;font-family:Arial,Helvetica,sans-serif}
-#capturePrivacyShield.active{display:flex!important}
-#capturePrivacyShield .shieldCard{max-width:520px;padding:28px 32px;border:1px solid rgba(255,255,255,.25);border-radius:14px;background:rgba(9,35,55,.96);box-shadow:0 24px 70px rgba(0,0,0,.35)}
-#capturePrivacyShield h2{margin:0 0 8px;font-size:24px}
-#capturePrivacyShield p{margin:0;color:#d8e8f4;line-height:1.5}
-@media print{body>*{display:none!important}body:after{content:"Printing disabled for this protected FR portal.";display:block!important;padding:40px;font:700 20px Arial;color:#111}}
-</style></head>""")
+    html = html.replace("</head>", "<style>#loginView{display:none!important}</style></head>")
     patch = r"""
 <script>
 window.__HOSTED_F7_USER__=__PROFILE__;
@@ -487,48 +463,9 @@ async function __saveHostedProfile(extra){
   if(!res.ok)throw new Error(body.error||'Profile update failed.');
   window.__HOSTED_F7_USER__=body;__applyHostedProfile(body);return body;
 }
-
-function __installCaptureProtection(){
-  var shield=document.getElementById('capturePrivacyShield');
-  if(!shield){
-    shield=document.createElement('div');
-    shield.id='capturePrivacyShield';
-    shield.innerHTML='<div class="shieldCard"><h2>Protected content hidden</h2><p>Return to this tab to continue. The portal hides exam content whenever the tab is minimized, switched away from, or the browser window loses focus. Browser pages cannot block OS-level screenshots while content is actively visible.</p></div>';
-    document.body.appendChild(shield);
-  }
-  function protect(){
-    shield.classList.add('active');
-    document.documentElement.style.background='#0d2941';
-  }
-  function reveal(){
-    if(document.visibilityState==='visible' && document.hasFocus()) shield.classList.remove('active');
-  }
-  document.addEventListener('visibilitychange',function(){document.hidden?protect():setTimeout(reveal,40)});
-  window.addEventListener('blur',protect,true);
-  window.addEventListener('focus',function(){setTimeout(reveal,40)},true);
-  window.addEventListener('beforeprint',protect);
-  window.addEventListener('afterprint',reveal);
-  document.addEventListener('contextmenu',function(e){e.preventDefault()});
-  document.addEventListener('keydown',function(e){
-    var k=String(e.key||'').toLowerCase();
-    var printShortcut=(e.ctrlKey||e.metaKey)&&k==='p';
-    var saveShortcut=(e.ctrlKey||e.metaKey)&&k==='s';
-    var devShortcut=(e.ctrlKey||e.metaKey)&&e.shiftKey&&(k==='i'||k==='j'||k==='c');
-    var printScreen=k==='printscreen';
-    if(printShortcut||saveShortcut||devShortcut||printScreen){
-      e.preventDefault();e.stopPropagation();protect();
-      setTimeout(reveal,900);
-      if(typeof toast==='function') toast('Capture/print shortcut blocked where supported by the browser.');
-      return false;
-    }
-  },true);
-  if(document.hidden || !document.hasFocus()) protect(); else reveal();
-}
-
 window.addEventListener('load',function(){
   try{
     __applyHostedProfile(window.__HOSTED_F7_USER__);
-    __installCaptureProtection();
     var login=document.getElementById('loginView'),dash=document.getElementById('dashboardView');
     if(login)login.classList.add('hiddenPortal');if(dash)dash.classList.remove('hiddenPortal');
     if(typeof showDashboard==='function')showDashboard('overview');else if(typeof showPortalView==='function')showPortalView('overview');
