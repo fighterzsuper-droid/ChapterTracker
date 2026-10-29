@@ -450,9 +450,6 @@ def api_topics():
         conn.close()
         return jsonify([dict(row) for row in rows])
 
-    if not is_admin(user):
-        conn.close()
-        return jsonify({"error":"Administrator access required."}), 403
     if not request.is_json:
         conn.close()
         abort(400)
@@ -482,8 +479,6 @@ def api_topics():
 @login_required
 def api_topic_item(topic_id):
     user = current_user()
-    if not is_admin(user):
-        return jsonify({"error":"Administrator access required."}), 403
     conn = db_connect()
     existing = conn.execute(
         "SELECT id,title,progress FROM progress_topics WHERE id=? AND user_id=?",
@@ -623,7 +618,7 @@ async function __saveHostedProfile(extra){
 }
 
 var __hostedTopics=[];
-var __managementTab='topics';
+var __managementTab='mocks';
 function __isHostedAdmin(){return !!(window.__HOSTED_F7_USER__&&window.__HOSTED_F7_USER__.role==='admin')}
 function __esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function __topicSummary(){
@@ -639,7 +634,6 @@ async function __loadTopics(renderAfter){
   if(renderAfter&&typeof renderPortalContent==='function')renderPortalContent();
 }
 async function addProgressTopic(){
-  if(!__isHostedAdmin())return;
   var input=document.getElementById('newTopicName');if(!input)return;
   var title=input.value.trim();if(!title){if(typeof toast==='function')toast('Enter a topic name.');return}
   var res=await fetch('/api/topics',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({title:title,progress:0})});
@@ -648,14 +642,12 @@ async function addProgressTopic(){
   input.value='';await __loadTopics(true);if(typeof toast==='function')toast('Topic added.');
 }
 async function setTopicProgress(id,progress){
-  if(!__isHostedAdmin())return;
   var res=await fetch('/api/topics/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({progress:Number(progress)})});
   var body=await res.json().catch(function(){return {}});
   if(!res.ok){if(typeof toast==='function')toast(body.error||'Could not update topic.');return}
   await __loadTopics(true);
 }
 async function deleteProgressTopic(id){
-  if(!__isHostedAdmin())return;
   if(!confirm('Delete this topic from your FR progress tracker?'))return;
   var res=await fetch('/api/topics/'+id,{method:'DELETE',credentials:'same-origin'});
   if(!res.ok){if(typeof toast==='function')toast('Could not delete topic.');return}
@@ -664,7 +656,7 @@ async function deleteProgressTopic(id){
 function __progressHero(){
   var s=__topicSummary();
   var chips=__hostedTopics.slice(0,6).map(function(t){return '<span class="progressTopicChip">'+__esc(t.title)+' · '+Number(t.progress)+'%</span>'}).join('');
-  return '<div class="progressHero"><div><div class="progressEyebrow">FR / F7 SYLLABUS PROGRESS</div><div class="progressTitle">'+(s.total?s.done+' of '+s.total+' topics completed':'Build your topic tracker')+'</div><div class="progressTrackBig"><div class="progressFillBig" style="width:'+s.percent+'%"></div></div><div class="progressMeta"><span>'+s.done+' completed</span><span>'+s.half+' at 50%</span><span>'+s.notStarted+' not started</span></div><div class="progressMiniTopics">'+(chips||'<span class="progressTopicChip">No topics added yet</span>')+'</div></div><div class="progressHeroActions"><div class="progressPercent">'+s.percent+'%</div>'+(__isHostedAdmin()?'<button class="progressManageBtn" onclick="__managementTab=\'topics\';showPortalView(\'management\')">+ Add / Manage Topics</button>':'')+'</div></div>';
+  return '<div class="progressHero"><div><div class="progressEyebrow">FR / F7 SYLLABUS PROGRESS</div><div class="progressTitle">'+(s.total?s.done+' of '+s.total+' topics completed':'Build your topic tracker')+'</div><div class="progressTrackBig"><div class="progressFillBig" style="width:'+s.percent+'%"></div></div><div class="progressMeta"><span>'+s.done+' completed</span><span>'+s.half+' at 50%</span><span>'+s.notStarted+' not started</span></div><div class="progressMiniTopics">'+(chips||'<span class="progressTopicChip">No topics added yet</span>')+'</div></div><div class="progressHeroActions"><div class="progressPercent">'+s.percent+'%</div>'+'<button class="progressManageBtn" onclick="showPortalView(\'progress\')">+ Add / Manage Topics</button>'+'</div></div>';
 }
 function portalOverviewV8(){
   var s=portalStats(),unfinished=!!(state.started&&!state.submitted&&(state.view!=='results'||state.retest&&state.retest.active));
@@ -692,9 +684,12 @@ function __topicManagementHtml(){
   (__hostedTopics.length?__hostedTopics.map(function(t){var p=Number(t.progress)||0;return '<div class="topicRow"><div><div class="topicName">'+__esc(t.title)+'</div><div class="topicStatus">'+(p===100?'Completed':p===50?'Half complete':'Not started')+' · '+p+'%</div></div><label class="topicCheck"><input type="checkbox" '+(p===50?'checked':'')+' onchange="setTopicProgress('+t.id+',this.checked?50:0)">50%</label><label class="topicCheck"><input type="checkbox" '+(p===100?'checked':'')+' onchange="setTopicProgress('+t.id+',this.checked?100:0)">Completed</label><button class="topicDelete" onclick="deleteProgressTopic('+t.id+')">Delete</button></div>'}).join(''):'<div class="emptyState">No topics yet. Add your first FR topic on the left.</div>')+
   '</div></div>';
 }
+function portalProgressV8(){
+  return '<div class="portalView managementPage"><div class="pageHead"><h2>My FR Progress</h2><div style="font-size:11px;color:#6f8395;font-weight:700">Your personal syllabus tracker</div></div>'+__topicManagementHtml()+'</div>';
+}
 function portalManagementV8(){
   if(!__isHostedAdmin())return '<div class="portalView managementPage"><div class="accessDenied"><div><h2>Management unavailable</h2><p>This area is restricted to the administrator account.</p></div></div></div>';
-  return '<div class="portalView managementPage"><div class="pageHead"><h2>Management Center</h2><div class="managementTabs"><button class="managementTab '+(__managementTab==='mocks'?'active':'')+'" onclick="__managementTab=\'mocks\';renderPortalContent()">Mock Library</button><button class="managementTab '+(__managementTab==='topics'?'active':'')+'" onclick="__managementTab=\'topics\';renderPortalContent()">Progress Topics</button></div></div>'+(__managementTab==='topics'?__topicManagementHtml():__mockManagementHtml())+'</div>';
+  return '<div class="portalView managementPage"><div class="pageHead"><h2>Management Center</h2><div style="font-size:11px;color:#6f8395;font-weight:700">Administrator · Mock library controls</div></div>'+__mockManagementHtml()+'</div>';
 }
 function toggleProfilePopover(ev){
   if(ev)ev.stopPropagation();
@@ -703,6 +698,20 @@ function toggleProfilePopover(ev){
 }
 function closeProfilePopover(){var pop=document.getElementById('profilePopover');if(pop)pop.classList.remove('open')}
 function openSettingsFromProfile(){closeProfilePopover();showPortalView('settings')}
+function __installProgressNav(){
+  if(document.querySelector('[data-pview="progress"]'))return;
+  var management=document.querySelector('[data-pview="management"]');
+  var analytics=document.querySelector('[data-pview="analytics"]');
+  var anchor=management||analytics;
+  if(!anchor||!anchor.parentNode)return;
+  var btn=document.createElement('button');
+  btn.className='portalNavBtn';
+  btn.dataset.pview='progress';
+  btn.innerHTML='▣ Progress';
+  btn.onclick=function(){showPortalView('progress')};
+  if(management)anchor.parentNode.insertBefore(btn,management);
+  else anchor.parentNode.insertBefore(btn,anchor.nextSibling);
+}
 function __installProfilePopover(){
   var u=window.__HOSTED_F7_USER__||{};
   var btn=document.getElementById('profileTopButton');if(btn)btn.setAttribute('onclick','toggleProfilePopover(event)');
@@ -722,6 +731,7 @@ function __renderHostedPortal(){
   else if(portalView==='history')C.innerHTML=portalHistory();
   else if(portalView==='retests')C.innerHTML=portalRetests();
   else if(portalView==='analytics')C.innerHTML=portalAnalytics();
+  else if(portalView==='progress')C.innerHTML=portalProgressV8();
   else if(portalView==='management')C.innerHTML=portalManagementV8();
   else if(portalView==='settings')C.innerHTML=portalProfile();
   else C.innerHTML=portalOverviewV8();
@@ -731,10 +741,10 @@ function __showHostedView(view){
   if(view==='management'&&!__isHostedAdmin())view='overview';
   portalView=view;
   qsa('.portalNavBtn').forEach(function(b){b.classList.toggle('active',b.dataset.pview===view)});
-  var map={overview:['Dashboard','Financial Reporting practice overview'],mocks:['Mock Exams','Launch, resume and review exam-standard practice papers'],history:['Test History','Completed mocks and objective results'],retests:['Retests','Reattempt unresolved objective-test weaknesses'],analytics:['Analytics','Performance trends and section-level accuracy'],management:['Management','Mocks and syllabus progress controls'],settings:['Settings','Account, email, password and profile picture']};
+  var map={overview:['Dashboard','Financial Reporting practice overview'],mocks:['Mock Exams','Launch, resume and review exam-standard practice papers'],history:['Test History','Completed mocks and objective results'],retests:['Retests','Reattempt unresolved objective-test weaknesses'],analytics:['Analytics','Performance trends and section-level accuracy'],progress:['Progress','Your personal FR syllabus tracker'],management:['Management','Administrator mock controls'],settings:['Settings','Account, email, password and profile picture']};
   var meta=map[view]||map.overview;
   document.getElementById('portalTitle').textContent=meta[0];document.getElementById('portalSub').textContent=meta[1];
-  document.getElementById('portalContent').classList.toggle('scrollView',['management','settings','mocks'].includes(view));
+  document.getElementById('portalContent').classList.toggle('scrollView',['progress','management','settings','mocks'].includes(view));
   closeProfilePopover();__renderHostedPortal();
 }
 
@@ -746,6 +756,7 @@ window.addEventListener('load',function(){
     portalManagement=portalManagementV8;
     portalOverviewV7=portalOverviewV8;
     var oldProfileNav=document.querySelector('[data-pview="profile"]');if(oldProfileNav)oldProfileNav.remove();
+    __installProgressNav();
     var mg=document.querySelector('[data-pview="management"]');if(mg)mg.style.display=__isHostedAdmin()?'':'none';
     __installProfilePopover();
     __loadTopics(false);
