@@ -562,6 +562,9 @@ def portal_html_for(user):
 .progressFillBig{height:100%;background:linear-gradient(90deg,#8ce0ff,#fff);border-radius:999px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
 .progressMeta{display:flex;gap:13px;margin-top:8px;font-size:10px;color:#d7effc;flex-wrap:wrap}
 .progressPercent{font-size:36px;font-weight:900;min-width:92px;text-align:right;position:relative;z-index:2}
+.progressHeroActions{display:flex;flex-direction:column;align-items:flex-end;gap:8px;position:relative;z-index:2}
+.progressManageBtn{height:34px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.14);color:#fff;border-radius:8px;padding:0 12px;font-weight:900;font-size:11px;cursor:pointer;backdrop-filter:blur(4px);transition:background .16s ease,transform .16s ease}
+.progressManageBtn:hover{background:rgba(255,255,255,.22);transform:translateY(-1px)}
 .progressMiniTopics{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;max-height:24px;overflow:hidden}
 .progressTopicChip{font-size:9px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);padding:3px 6px;border-radius:999px}
 .metricGridV8{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
@@ -620,7 +623,7 @@ async function __saveHostedProfile(extra){
 }
 
 var __hostedTopics=[];
-var __managementTab='mocks';
+var __managementTab='topics';
 function __isHostedAdmin(){return !!(window.__HOSTED_F7_USER__&&window.__HOSTED_F7_USER__.role==='admin')}
 function __esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function __topicSummary(){
@@ -661,7 +664,7 @@ async function deleteProgressTopic(id){
 function __progressHero(){
   var s=__topicSummary();
   var chips=__hostedTopics.slice(0,6).map(function(t){return '<span class="progressTopicChip">'+__esc(t.title)+' · '+Number(t.progress)+'%</span>'}).join('');
-  return '<div class="progressHero"><div><div class="progressEyebrow">FR / F7 SYLLABUS PROGRESS</div><div class="progressTitle">'+(s.total?s.done+' of '+s.total+' topics completed':'Build your topic tracker')+'</div><div class="progressTrackBig"><div class="progressFillBig" style="width:'+s.percent+'%"></div></div><div class="progressMeta"><span>'+s.done+' completed</span><span>'+s.half+' at 50%</span><span>'+s.notStarted+' not started</span></div><div class="progressMiniTopics">'+(chips||'<span class="progressTopicChip">Add topics from Management</span>')+'</div></div><div class="progressPercent">'+s.percent+'%</div></div>';
+  return '<div class="progressHero"><div><div class="progressEyebrow">FR / F7 SYLLABUS PROGRESS</div><div class="progressTitle">'+(s.total?s.done+' of '+s.total+' topics completed':'Build your topic tracker')+'</div><div class="progressTrackBig"><div class="progressFillBig" style="width:'+s.percent+'%"></div></div><div class="progressMeta"><span>'+s.done+' completed</span><span>'+s.half+' at 50%</span><span>'+s.notStarted+' not started</span></div><div class="progressMiniTopics">'+(chips||'<span class="progressTopicChip">No topics added yet</span>')+'</div></div><div class="progressHeroActions"><div class="progressPercent">'+s.percent+'%</div>'+(__isHostedAdmin()?'<button class="progressManageBtn" onclick="__managementTab=\'topics\';showPortalView(\'management\')">+ Add / Manage Topics</button>':'')+'</div></div>';
 }
 function portalOverviewV8(){
   var s=portalStats(),unfinished=!!(state.started&&!state.submitted&&(state.view!=='results'||state.retest&&state.retest.active));
@@ -685,7 +688,7 @@ function __mockManagementHtml(){
 }
 function __topicManagementHtml(){
   var s=__topicSummary();
-  return '<div class="topicMgmtWrap"><div class="topicAddPanel"><div class="topicAddCard"><h3>Add FR topic</h3><p>Create any syllabus/topic item, then mark it Not started, 50% done, or Completed.</p><div class="topicAddRow"><input id="newTopicName" maxlength="140" placeholder="e.g. IAS 16 Property, plant and equipment"><button class="portalBtn primary" onclick="addProgressTopic()">Add topic</button></div></div><div class="schemaBox">Overall progress: '+s.percent+'%\\nCompleted: '+s.done+'\\n50% done: '+s.half+'\\nNot started: '+s.notStarted+'</div></div><div class="topicListPanel">'+
+  return '<div class="topicMgmtWrap"><div class="topicAddPanel"><div class="topicAddCard"><h3>Add FR topic</h3><p>Add each syllabus area you want to track. Use 50% while studying it, then mark it Completed when finished.</p><div class="topicAddRow"><input id="newTopicName" maxlength="140" placeholder="e.g. IAS 16 Property, plant and equipment"><button class="portalBtn primary" onclick="addProgressTopic()">Add topic</button></div></div><div class="schemaBox">Overall progress: '+s.percent+'%\\nCompleted: '+s.done+'\\n50% done: '+s.half+'\\nNot started: '+s.notStarted+'</div></div><div class="topicListPanel">'+
   (__hostedTopics.length?__hostedTopics.map(function(t){var p=Number(t.progress)||0;return '<div class="topicRow"><div><div class="topicName">'+__esc(t.title)+'</div><div class="topicStatus">'+(p===100?'Completed':p===50?'Half complete':'Not started')+' · '+p+'%</div></div><label class="topicCheck"><input type="checkbox" '+(p===50?'checked':'')+' onchange="setTopicProgress('+t.id+',this.checked?50:0)">50%</label><label class="topicCheck"><input type="checkbox" '+(p===100?'checked':'')+' onchange="setTopicProgress('+t.id+',this.checked?100:0)">Completed</label><button class="topicDelete" onclick="deleteProgressTopic('+t.id+')">Delete</button></div>'}).join(''):'<div class="emptyState">No topics yet. Add your first FR topic on the left.</div>')+
   '</div></div>';
 }
