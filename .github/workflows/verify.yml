@@ -13,6 +13,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - run: python -m pip install -r requirements.txt
       - run: python -m py_compile app.py
       - name: Verify FR portal package
@@ -28,3 +31,28 @@ jobs:
           assert 'Management' in html
           print('F7 portal package OK:',len(html),'bytes')
           PY
+
+      - name: Verify served portal JavaScript syntax
+        run: |
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          import app
+          fake_user = {
+              "id": 1,
+              "username": "jay",
+              "email": "Jayakiran804@gmail.com",
+              "display_name": "Jayakiran",
+              "password_hash": "",
+              "google_sub": "test-google-sub",
+              "avatar": "",
+              "google_picture": "",
+              "created_at": "",
+              "updated_at": "",
+          }
+          html = app.portal_html_for(fake_user)
+          scripts = re.findall(r"<script[^>]*>(.*?)</script>", html, flags=re.S | re.I)
+          Path("/tmp/portal-scripts.js").write_text("\n;\n".join(scripts), encoding="utf-8")
+          print("Extracted", len(scripts), "script blocks")
+          PY
+          node --check /tmp/portal-scripts.js
