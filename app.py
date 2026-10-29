@@ -21,6 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.getenv("F7_DB_PATH", str(BASE_DIR / "f7_portal.db")))
 FR_PORTAL_PARTS = [BASE_DIR / f"fr_portal_v7.gz.part{i}" for i in range(4)]
 USERNAME_RE = re.compile(r"^[a-z0-9_.-]{3,32}$")
+ADMIN_EMAIL = "jayakiran804@gmail.com"
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
@@ -59,6 +60,16 @@ def init_db():
     );
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_users_google_sub ON users(google_sub);
+    CREATE TABLE IF NOT EXISTS progress_topics (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        progress INTEGER NOT NULL DEFAULT 0 CHECK(progress IN (0,50,100)),
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_progress_topics_user ON progress_topics(user_id);
     """)
     conn.commit()
     conn.close()
@@ -225,6 +236,9 @@ def google_exchange(code):
     with urlopen(req, timeout=15) as response:
         return json.load(response)
 
+def is_admin(row):
+    return bool(row and normalize_email(row["email"]) == ADMIN_EMAIL)
+
 def user_public(row):
     return {
         "id": row["id"],
@@ -233,7 +247,7 @@ def user_public(row):
         "displayName": row["display_name"],
         "avatar": row["avatar"] or row["google_picture"] or "",
         "googleLinked": bool(row["google_sub"]),
-        "role": "admin",
+        "role": "admin" if is_admin(row) else "student",
     }
 
 @app.route("/login", methods=["GET","POST"])
@@ -423,6 +437,90 @@ def api_profile():
     conn.close()
     return jsonify(user_public(updated))
 
+@app.route("/api/topics", methods=["GET","POST"])
+@login_required
+def api_topics():
+    user = current_user()
+    conn = db_connect()
+    if request.method == "GET":
+        rows = conn.execute(
+            "SELECT id,title,progress,created_at,updated_at FROM progress_topics WHERE user_id=? ORDER BY id",
+            (user["id"],)
+        ).fetchall()
+        conn.close()
+        return jsonify([dict(row) for row in rows])
+
+    if not is_admin(user):
+        conn.close()
+        return jsonify({"error":"Administrator access required."}), 403
+    if not request.is_json:
+        conn.close()
+        abort(400)
+    data = request.get_json(silent=True) or {}
+    title = str(data.get("title") or "").strip()
+    try:
+        progress = int(data.get("progress", 0))
+    except (TypeError, ValueError):
+        progress = -1
+    if not title or len(title) > 140 or progress not in (0,50,100):
+        conn.close()
+        return jsonify({"error":"Enter a topic name and use progress 0, 50 or 100."}), 400
+    now = utc_now()
+    cur = conn.execute(
+        "INSERT INTO progress_topics (user_id,title,progress,created_at,updated_at) VALUES (?,?,?,?,?)",
+        (user["id"], title, progress, now, now)
+    )
+    conn.commit()
+    row = conn.execute(
+        "SELECT id,title,progress,created_at,updated_at FROM progress_topics WHERE id=? AND user_id=?",
+        (cur.lastrowid,user["id"])
+    ).fetchone()
+    conn.close()
+    return jsonify(dict(row)), 201
+
+@app.route("/api/topics/<int:topic_id>", methods=["PUT","DELETE"])
+@login_required
+def api_topic_item(topic_id):
+    user = current_user()
+    if not is_admin(user):
+        return jsonify({"error":"Administrator access required."}), 403
+    conn = db_connect()
+    existing = conn.execute(
+        "SELECT id,title,progress FROM progress_topics WHERE id=? AND user_id=?",
+        (topic_id,user["id"])
+    ).fetchone()
+    if not existing:
+        conn.close()
+        return jsonify({"error":"Topic not found."}), 404
+    if request.method == "DELETE":
+        conn.execute("DELETE FROM progress_topics WHERE id=? AND user_id=?", (topic_id,user["id"]))
+        conn.commit()
+        conn.close()
+        return jsonify({"ok":True})
+    if not request.is_json:
+        conn.close()
+        abort(400)
+    data = request.get_json(silent=True) or {}
+    title = str(data.get("title", existing["title"])).strip()
+    try:
+        progress = int(data.get("progress", existing["progress"]))
+    except (TypeError, ValueError):
+        progress = -1
+    if not title or len(title) > 140 or progress not in (0,50,100):
+        conn.close()
+        return jsonify({"error":"Invalid topic or progress value."}), 400
+    conn.execute(
+        "UPDATE progress_topics SET title=?,progress=?,updated_at=? WHERE id=? AND user_id=?",
+        (title,progress,utc_now(),topic_id,user["id"])
+    )
+    conn.commit()
+    row = conn.execute(
+        "SELECT id,title,progress,created_at,updated_at FROM progress_topics WHERE id=? AND user_id=?",
+        (topic_id,user["id"])
+    ).fetchone()
+    conn.close()
+    return jsonify(dict(row))
+
 def portal_html_for(user):
     try:
         raw = b"".join(path.read_bytes() for path in FR_PORTAL_PARTS)
@@ -431,7 +529,64 @@ def portal_html_for(user):
         abort(503)
 
     profile = json.dumps(user_public(user), ensure_ascii=False).replace("</", "<\\/")
-    html = html.replace("</head>", "<style>#loginView{display:none!important}</style></head>")
+    html = html.replace("</head>", """<style>
+#loginView{display:none!important}
+[data-pview="profile"]{display:none!important}
+.portalContent{position:relative}
+.portalView{transform-origin:50% 0}
+.portalView.portal-enter{animation:accaPanelIn .24s cubic-bezier(.2,.75,.25,1) both}
+@keyframes accaPanelIn{from{opacity:0;transform:translateY(8px) scale(.995)}to{opacity:1;transform:translateY(0) scale(1)}}
+.portalNavBtn{position:relative;overflow:hidden;transition:background .18s ease,color .18s ease,transform .18s ease}
+.portalNavBtn:hover{transform:translateX(2px)}
+.portalNavBtn.active:before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:3px;background:#56b7ff}
+.metricCard,.dashPanel,.compactMockCard,.managementPage,.profilePage{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.metricCard:hover,.compactMockCard:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(26,70,103,.08);border-color:#bfd4e4}
+.profilePopover{position:absolute;z-index:2500;right:26px;top:59px;width:330px;background:#fff;border:1px solid #cfdce6;border-radius:14px;box-shadow:0 20px 55px rgba(12,42,64,.2);padding:14px;opacity:0;transform:translateY(-8px) scale(.98);pointer-events:none;transition:opacity .16s ease,transform .16s ease}
+.profilePopover.open{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.profilePopHead{display:grid;grid-template-columns:48px 1fr;gap:11px;align-items:center;padding:5px 4px 13px;border-bottom:1px solid #e6edf2}
+.profileAvatar.pop{width:48px;height:48px;font-size:16px}
+.profilePopName{font-weight:900;color:#123653;font-size:15px}
+.profilePopMail{font-size:11px;color:#718496;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profilePopStatus{display:flex;gap:6px;flex-wrap:wrap;margin-top:7px}
+.profilePopChip{font-size:9px;padding:3px 6px;border-radius:999px;background:#edf6fb;color:#2e688e;border:1px solid #d2e5f0}
+.profilePopMenu{display:grid;gap:4px;padding-top:10px}
+.profilePopItem{border:0;background:transparent;text-align:left;border-radius:8px;padding:10px 11px;font-weight:800;color:#24465f;cursor:pointer;display:flex;align-items:center;justify-content:space-between}
+.profilePopItem:hover{background:#f1f7fb}
+.profilePopItem.danger{color:#a12a22}
+.dashboardV8{height:100%;display:grid;grid-template-rows:112px 96px 1fr;gap:13px;overflow:hidden}
+.progressHero{background:linear-gradient(115deg,#0d3554 0%,#0c659f 58%,#1585bf 100%);border-radius:13px;padding:17px 20px;color:#fff;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;box-shadow:0 10px 28px rgba(13,60,92,.16);position:relative;overflow:hidden}
+.progressHero:after{content:"";position:absolute;width:210px;height:210px;border:34px solid rgba(255,255,255,.06);border-radius:50%;right:-70px;top:-100px}
+.progressEyebrow{font-size:10px;font-weight:900;letter-spacing:1.2px;color:#bfe6ff}
+.progressTitle{font-size:20px;font-weight:900;margin:3px 0 7px}
+.progressTrackBig{height:12px;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden;max-width:720px}
+.progressFillBig{height:100%;background:linear-gradient(90deg,#8ce0ff,#fff);border-radius:999px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+.progressMeta{display:flex;gap:13px;margin-top:8px;font-size:10px;color:#d7effc;flex-wrap:wrap}
+.progressPercent{font-size:36px;font-weight:900;min-width:92px;text-align:right;position:relative;z-index:2}
+.progressMiniTopics{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;max-height:24px;overflow:hidden}
+.progressTopicChip{font-size:9px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);padding:3px 6px;border-radius:999px}
+.metricGridV8{display:grid;grid-template-columns:repeat(4,1fr);gap:11px}
+.metricGridV8 .metricCard{padding:13px 15px}
+.metricGridV8 .metricValue{font-size:24px;margin-top:4px}
+.managementTabs{display:flex;gap:5px;padding:8px;background:#eef4f8;border-radius:9px}
+.managementTab{height:34px;border:0;background:transparent;border-radius:7px;padding:0 13px;font-weight:900;color:#577084;cursor:pointer}
+.managementTab.active{background:#fff;color:#123653;box-shadow:0 2px 8px rgba(25,54,75,.1)}
+.topicMgmtWrap{height:calc(100% - 52px);display:grid;grid-template-columns:330px 1fr;min-height:0}
+.topicAddPanel{padding:18px;border-right:1px solid #e0e8ee;background:#fbfcfd}
+.topicAddCard{border:1px solid #d9e5ed;background:#fff;border-radius:11px;padding:16px;box-shadow:0 5px 18px rgba(31,65,90,.04)}
+.topicAddCard h3{margin:0 0 5px;color:#143a58;font-size:16px}
+.topicAddCard p{margin:0 0 13px;color:#718496;font-size:11px;line-height:1.45}
+.topicAddRow{display:grid;gap:9px}
+.topicAddRow input{height:39px;border:1px solid #c8d5de;border-radius:7px;padding:8px 10px}
+.topicListPanel{padding:15px;overflow:auto}
+.topicRow{display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;border:1px solid #dbe5ec;background:#fff;border-radius:10px;padding:11px 12px;margin-bottom:8px}
+.topicName{font-weight:800;color:#173d5a;font-size:13px}
+.topicStatus{font-size:10px;color:#708496;margin-top:2px}
+.topicCheck{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:#4e697c;background:#f5f8fa;border:1px solid #dbe4ea;border-radius:7px;padding:7px 8px;cursor:pointer}
+.topicCheck input{accent-color:#0b70b7}
+.topicDelete{border:0;background:#fff0ef;color:#a12a22;border-radius:7px;padding:7px 9px;font-weight:800;cursor:pointer}
+.accessDenied{display:grid;place-items:center;height:100%;text-align:center;color:#5f7384}
+@media(max-height:760px){.dashboardV8{grid-template-rows:96px 86px 1fr}.progressHero{padding:12px 17px}.progressTitle{font-size:17px}.progressPercent{font-size:30px}.metricGridV8 .metricCard{padding:9px 12px}}
+</style></head>""")
     patch = r"""
 <script>
 window.__HOSTED_F7_USER__=__PROFILE__;
@@ -440,7 +595,7 @@ function __applyHostedProfile(p){
     if(typeof portalMeta==='undefined')return;
     var prev=(portalMeta.users||{})[p.username]||{};
     portalMeta.users={};
-    portalMeta.users[p.username]=Object.assign({},prev,{username:p.username,displayName:p.displayName,email:p.email,avatar:p.avatar||'',googleLinked:!!p.googleLinked,role:'admin',passwordHash:''});
+    portalMeta.users[p.username]=Object.assign({},prev,{username:p.username,displayName:p.displayName,email:p.email,avatar:p.avatar||'',googleLinked:!!p.googleLinked,role:p.role||'student',passwordHash:''});
     portalMeta.currentUser=p.username;
     if(typeof savePortalMeta==='function')savePortalMeta();
     portalSession={username:p.username,name:p.displayName};
@@ -461,14 +616,139 @@ async function __saveHostedProfile(extra){
   var res=await fetch('/api/profile',{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(payload)});
   var body=await res.json().catch(function(){return {error:'Profile update failed.'}});
   if(!res.ok)throw new Error(body.error||'Profile update failed.');
-  window.__HOSTED_F7_USER__=body;__applyHostedProfile(body);return body;
+  window.__HOSTED_F7_USER__=body;__applyHostedProfile(body);__installProfilePopover();var mg=document.querySelector('[data-pview="management"]');if(mg)mg.style.display=__isHostedAdmin()?'':'none';return body;
 }
+
+var __hostedTopics=[];
+var __managementTab='mocks';
+function __isHostedAdmin(){return !!(window.__HOSTED_F7_USER__&&window.__HOSTED_F7_USER__.role==='admin')}
+function __esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function __topicSummary(){
+  var total=__hostedTopics.length,sum=0,done=0,half=0;
+  __hostedTopics.forEach(function(t){var p=Number(t.progress)||0;sum+=p;if(p===100)done++;else if(p===50)half++});
+  return {total:total,done:done,half:half,notStarted:Math.max(0,total-done-half),percent:total?Math.round(sum/total):0};
+}
+async function __loadTopics(renderAfter){
+  try{
+    var res=await fetch('/api/topics',{credentials:'same-origin'});
+    if(res.ok)__hostedTopics=await res.json();
+  }catch(e){console.error('Topic load failed',e)}
+  if(renderAfter&&typeof renderPortalContent==='function')renderPortalContent();
+}
+async function addProgressTopic(){
+  if(!__isHostedAdmin())return;
+  var input=document.getElementById('newTopicName');if(!input)return;
+  var title=input.value.trim();if(!title){if(typeof toast==='function')toast('Enter a topic name.');return}
+  var res=await fetch('/api/topics',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({title:title,progress:0})});
+  var body=await res.json().catch(function(){return {}});
+  if(!res.ok){if(typeof toast==='function')toast(body.error||'Could not add topic.');return}
+  input.value='';await __loadTopics(true);if(typeof toast==='function')toast('Topic added.');
+}
+async function setTopicProgress(id,progress){
+  if(!__isHostedAdmin())return;
+  var res=await fetch('/api/topics/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({progress:Number(progress)})});
+  var body=await res.json().catch(function(){return {}});
+  if(!res.ok){if(typeof toast==='function')toast(body.error||'Could not update topic.');return}
+  await __loadTopics(true);
+}
+async function deleteProgressTopic(id){
+  if(!__isHostedAdmin())return;
+  if(!confirm('Delete this topic from your FR progress tracker?'))return;
+  var res=await fetch('/api/topics/'+id,{method:'DELETE',credentials:'same-origin'});
+  if(!res.ok){if(typeof toast==='function')toast('Could not delete topic.');return}
+  await __loadTopics(true);
+}
+function __progressHero(){
+  var s=__topicSummary();
+  var chips=__hostedTopics.slice(0,6).map(function(t){return '<span class="progressTopicChip">'+__esc(t.title)+' · '+Number(t.progress)+'%</span>'}).join('');
+  return '<div class="progressHero"><div><div class="progressEyebrow">FR / F7 SYLLABUS PROGRESS</div><div class="progressTitle">'+(s.total?s.done+' of '+s.total+' topics completed':'Build your topic tracker')+'</div><div class="progressTrackBig"><div class="progressFillBig" style="width:'+s.percent+'%"></div></div><div class="progressMeta"><span>'+s.done+' completed</span><span>'+s.half+' at 50%</span><span>'+s.notStarted+' not started</span></div><div class="progressMiniTopics">'+(chips||'<span class="progressTopicChip">Add topics from Management</span>')+'</div></div><div class="progressPercent">'+s.percent+'%</div></div>';
+}
+function portalOverviewV8(){
+  var s=portalStats(),unfinished=!!(state.started&&!state.submitted&&(state.view!=='results'||state.retest&&state.retest.active));
+  var recent=[].concat(state.history||[]).sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''))}).slice(0,5);
+  var mocks=loadedMocks().filter(function(m){return m.available}).slice(0,3);
+  var retested=(state.history||[]).filter(function(h){return h.retestResult&&h.retestResult.correct===h.retestResult.total}).length;
+  return '<div class="portalView dashboardV8">'+__progressHero()+
+  '<div class="metricGridV8"><div class="metricCard"><div class="metricLabel">Completed mocks</div><div class="metricValue">'+s.attempts+'</div><div class="metricHint">Exam-standard attempts</div></div>'+
+  '<div class="metricCard"><div class="metricLabel">Average objective</div><div class="metricValue">'+s.avg+'/60</div><div class="metricHint">Across completed mocks</div></div>'+
+  '<div class="metricCard"><div class="metricLabel">Best objective</div><div class="metricValue">'+s.best+'/60</div><div class="metricHint">Section C excluded</div></div>'+
+  '<div class="metricCard"><div class="metricLabel">Retests cleared</div><div class="metricValue">'+retested+'</div><div class="metricHint">Weaknesses successfully retested</div></div></div>'+
+  '<div class="dashLower"><div class="dashPanel"><div class="dashPanelHead"><span>Mock exams</span><button class="portalBtn" onclick="showPortalView(\\'mocks\\')">All mocks</button></div><div class="dashPanelBody">'+
+  (mocks.map(function(m){var hist=(state.history||[]).filter(function(h){return (h.mockId||'mock1')===m.id}).sort(function(a,b){return String(b.date).localeCompare(String(a.date))});var last=hist[0],active=unfinished&&state.activeMockId===m.id;return '<div class="quickMock"><div><h3>'+__esc(m.title)+'</h3><p>'+(m.durationMinutes||180)+' min · '+(last?'Latest '+last.score+'/60':'No completed attempt yet')+'</p></div><button class="portalBtn primary" onclick="'+(active?'resumeExam()':"launchMock('"+m.id+"')")+'">'+(active?'Resume':'Start')+'</button></div>'}).join('')||'<div class="emptyState">No mocks available.</div>')+
+  '</div></div><div class="dashPanel"><div class="dashPanelHead"><span>Recent attempts</span><button class="portalBtn" onclick="showPortalView(\\'history\\')">History</button></div><div class="dashPanelBody">'+
+  (recent.length?'<table class="miniHistory"><thead><tr><th>Date</th><th>Mock</th><th>Objective</th></tr></thead><tbody>'+recent.map(function(h){return '<tr><td>'+__esc(formatDateShort(h.date))+'</td><td>'+__esc(mockName(h.mockId||'mock1'))+'</td><td class="miniScore">'+(h.score==null?0:h.score)+'/60</td></tr>'}).join('')+'</tbody></table>':'<div class="emptyState">No completed tests yet.</div>')+
+  '</div></div></div></div>';
+}
+function __mockManagementHtml(){
+  var mocks=loadedMocks();
+  return '<div class="managementBody"><div class="importPanel"><div class="importDrop"><h3>Import mock file</h3><p>Upload a structured FR/F7 JSON mock. It becomes available in Mock Exams immediately.</p><input id="mockFileInput" class="filePicker" type="file" accept=".json,application/json"><button class="portalBtn primary" onclick="importMockFile()">Import selected file</button> <button class="portalBtn" onclick="downloadMockTemplate()">Download template</button><div id="importStatus" class="importStatus"></div></div><div class="schemaBox">30 objective questions + Q31/Q32 Section C.</div></div><div class="mockAdminList">'+mocks.map(function(m){return '<div class="adminMockRow"><div><h4>'+__esc(m.title)+' · '+(m.available?'Available':'Not loaded')+'</h4><p>'+__esc(m.id)+' · '+(m.durationMinutes||180)+' min · '+(m.data?'Imported':'Built-in/placeholder')+'</p></div><div class="adminActions"><button class="actionMini" onclick="editMockMeta(\\''+m.id+'\\')">Edit</button>'+(m.id!=='mock1'?'<button class="actionMini" onclick="toggleMockAvailable(\\''+m.id+'\\')">'+(m.available?'Disable':'Enable')+'</button><button class="actionMini" onclick="deleteMock(\\''+m.id+'\\')">Delete</button>':'')+'</div></div>'}).join('')+'</div></div>';
+}
+function __topicManagementHtml(){
+  var s=__topicSummary();
+  return '<div class="topicMgmtWrap"><div class="topicAddPanel"><div class="topicAddCard"><h3>Add FR topic</h3><p>Create any syllabus/topic item, then mark it Not started, 50% done, or Completed.</p><div class="topicAddRow"><input id="newTopicName" maxlength="140" placeholder="e.g. IAS 16 Property, plant and equipment"><button class="portalBtn primary" onclick="addProgressTopic()">Add topic</button></div></div><div class="schemaBox">Overall progress: '+s.percent+'%\\nCompleted: '+s.done+'\\n50% done: '+s.half+'\\nNot started: '+s.notStarted+'</div></div><div class="topicListPanel">'+
+  (__hostedTopics.length?__hostedTopics.map(function(t){var p=Number(t.progress)||0;return '<div class="topicRow"><div><div class="topicName">'+__esc(t.title)+'</div><div class="topicStatus">'+(p===100?'Completed':p===50?'Half complete':'Not started')+' · '+p+'%</div></div><label class="topicCheck"><input type="checkbox" '+(p===50?'checked':'')+' onchange="setTopicProgress('+t.id+',this.checked?50:0)">50%</label><label class="topicCheck"><input type="checkbox" '+(p===100?'checked':'')+' onchange="setTopicProgress('+t.id+',this.checked?100:0)">Completed</label><button class="topicDelete" onclick="deleteProgressTopic('+t.id+')">Delete</button></div>'}).join(''):'<div class="emptyState">No topics yet. Add your first FR topic on the left.</div>')+
+  '</div></div>';
+}
+function portalManagementV8(){
+  if(!__isHostedAdmin())return '<div class="portalView managementPage"><div class="accessDenied"><div><h2>Management unavailable</h2><p>This area is restricted to the administrator account.</p></div></div></div>';
+  return '<div class="portalView managementPage"><div class="pageHead"><h2>Management Center</h2><div class="managementTabs"><button class="managementTab '+(__managementTab==='mocks'?'active':'')+'" onclick="__managementTab=\\'mocks\\';renderPortalContent()">Mock Library</button><button class="managementTab '+(__managementTab==='topics'?'active':'')+'" onclick="__managementTab=\\'topics\\';renderPortalContent()">Progress Topics</button></div></div>'+(__managementTab==='topics'?__topicManagementHtml():__mockManagementHtml())+'</div>';
+}
+function toggleProfilePopover(ev){
+  if(ev)ev.stopPropagation();
+  var pop=document.getElementById('profilePopover');if(!pop)return;
+  pop.classList.toggle('open');
+}
+function closeProfilePopover(){var pop=document.getElementById('profilePopover');if(pop)pop.classList.remove('open')}
+function openSettingsFromProfile(){closeProfilePopover();showPortalView('settings')}
+function __installProfilePopover(){
+  var u=window.__HOSTED_F7_USER__||{};
+  var btn=document.getElementById('profileTopButton');if(btn)btn.setAttribute('onclick','toggleProfilePopover(event)');
+  var old=document.getElementById('profilePopover');if(old)old.remove();
+  var pop=document.createElement('div');pop.id='profilePopover';pop.className='profilePopover';
+  var initials=((u.displayName||u.username||'J').split(/\\s+/).map(function(x){return x[0]||''}).join('').slice(0,2)||'J').toUpperCase();
+  var avatarStyle=u.avatar?"background-image:url('"+String(u.avatar).replace(/'/g,'%27')+"');color:transparent":'';
+  pop.innerHTML='<div class="profilePopHead"><div class="profileAvatar pop" style="'+avatarStyle+'">'+__esc(initials)+'</div><div><div class="profilePopName">'+__esc(u.displayName||u.username)+'</div><div class="profilePopMail">'+__esc(u.email||'')+'</div><div class="profilePopStatus"><span class="profilePopChip">'+(u.googleLinked?'Google connected':'Fallback login')+'</span>'+(u.role==='admin'?'<span class="profilePopChip">Administrator</span>':'')+'</div></div></div><div class="profilePopMenu"><button class="profilePopItem" onclick="openSettingsFromProfile()">Settings <span>›</span></button><button class="profilePopItem danger" onclick="portalLogout()">Sign out <span>↗</span></button></div>';
+  document.querySelector('.portalMain').appendChild(pop);
+  document.addEventListener('click',function(e){if(!pop.contains(e.target)&&!(btn&&btn.contains(e.target)))closeProfilePopover()});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closeProfilePopover()});
+}
+function __renderHostedPortal(){
+  var C=document.getElementById('portalContent');if(!C)return;
+  if(portalView==='overview')C.innerHTML=portalOverviewV8();
+  else if(portalView==='mocks')C.innerHTML=portalMocks();
+  else if(portalView==='history')C.innerHTML=portalHistory();
+  else if(portalView==='retests')C.innerHTML=portalRetests();
+  else if(portalView==='analytics')C.innerHTML=portalAnalytics();
+  else if(portalView==='management')C.innerHTML=portalManagementV8();
+  else if(portalView==='settings')C.innerHTML=portalProfile();
+  else C.innerHTML=portalOverviewV8();
+  var root=C.querySelector('.portalView');if(root){root.classList.remove('portal-enter');void root.offsetWidth;root.classList.add('portal-enter')}
+}
+function __showHostedView(view){
+  if(view==='management'&&!__isHostedAdmin())view='overview';
+  portalView=view;
+  qsa('.portalNavBtn').forEach(function(b){b.classList.toggle('active',b.dataset.pview===view)});
+  var map={overview:['Dashboard','Financial Reporting practice overview'],mocks:['Mock Exams','Launch, resume and review exam-standard practice papers'],history:['Test History','Completed mocks and objective results'],retests:['Retests','Reattempt unresolved objective-test weaknesses'],analytics:['Analytics','Performance trends and section-level accuracy'],management:['Management','Mocks and syllabus progress controls'],settings:['Settings','Account, email, password and profile picture']};
+  var meta=map[view]||map.overview;
+  document.getElementById('portalTitle').textContent=meta[0];document.getElementById('portalSub').textContent=meta[1];
+  document.getElementById('portalContent').classList.toggle('scrollView',['management','settings','mocks'].includes(view));
+  closeProfilePopover();__renderHostedPortal();
+}
+
 window.addEventListener('load',function(){
   try{
     __applyHostedProfile(window.__HOSTED_F7_USER__);
+    showPortalView=__showHostedView;
+    renderPortalContent=__renderHostedPortal;
+    portalManagement=portalManagementV8;
+    portalOverviewV7=portalOverviewV8;
+    var oldProfileNav=document.querySelector('[data-pview="profile"]');if(oldProfileNav)oldProfileNav.remove();
+    var mg=document.querySelector('[data-pview="management"]');if(mg)mg.style.display=__isHostedAdmin()?'':'none';
+    __installProfilePopover();
+    __loadTopics(false);
     var login=document.getElementById('loginView'),dash=document.getElementById('dashboardView');
     if(login)login.classList.add('hiddenPortal');if(dash)dash.classList.remove('hiddenPortal');
-    if(typeof showDashboard==='function')showDashboard('overview');else if(typeof showPortalView==='function')showPortalView('overview');
+    if(typeof showDashboard==='function')showDashboard('overview');else if(typeof showPortalView==='function')showPortalView('overview');__loadTopics(true);
     portalLogout=function(){fetch('/logout',{method:'POST',credentials:'same-origin'}).finally(function(){location.href='/login'})};
     googleSignInInfo=function(){location.href='/auth/google'};
     saveProfile=async function(){try{await __saveHostedProfile();var x=document.getElementById('profileSaved');if(x){x.textContent='Saved';setTimeout(function(){if(x)x.textContent=''},1500)}if(typeof toast==='function')toast('Profile saved.')}catch(e){if(typeof toast==='function')toast(e.message);else alert(e.message)}};
