@@ -209,11 +209,14 @@ def render_login():
     return render_template_string(LOGIN_PAGE, css=CSS, csrf=csrf_token())
 
 def google_redirect_uri():
+    # Build the callback from the current hosted domain so a Bot-Hosting
+    # domain change does not leave OAuth pointing at an obsolete hostname.
+    # GOOGLE_REDIRECT_URI is retained only as a fallback for non-request use.
+    if request:
+        scheme = "http" if os.getenv("HUB_ALLOW_HTTP") == "1" else "https"
+        return url_for("google_callback", _external=True, _scheme=scheme)
     configured = (os.getenv("GOOGLE_REDIRECT_URI") or "").strip()
-    if configured:
-        return configured
-    scheme = "http" if os.getenv("HUB_ALLOW_HTTP") == "1" else "https"
-    return url_for("google_callback", _external=True, _scheme=scheme)
+    return configured
 
 def google_configured():
     return bool(os.getenv("GOOGLE_CLIENT_ID") and os.getenv("GOOGLE_CLIENT_SECRET"))
@@ -784,7 +787,12 @@ def old_fr_redirect():
 
 @app.route("/health")
 def health():
-    return {"ok":True,"service":"jay-acca-fr-portal","google_oauth_configured":google_configured()}
+    return {
+        "ok": True,
+        "service": "jay-acca-fr-portal",
+        "google_oauth_configured": google_configured(),
+        "google_redirect_uri": google_redirect_uri(),
+    }
 
 purge_legacy_f6_f8_data()
 init_db()
