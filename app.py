@@ -13,7 +13,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
-from flask import Flask, Response, abort, flash, jsonify, redirect, render_template_string, request, session, url_for
+from flask import Flask, Response, abort, flash, has_request_context, jsonify, redirect, render_template_string, request, session, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -212,7 +212,7 @@ def google_redirect_uri():
     # Build the callback from the current hosted domain so a Bot-Hosting
     # domain change does not leave OAuth pointing at an obsolete hostname.
     # GOOGLE_REDIRECT_URI is retained only as a fallback for non-request use.
-    if request:
+    if has_request_context():
         scheme = "http" if os.getenv("HUB_ALLOW_HTTP") == "1" else "https"
         return url_for("google_callback", _external=True, _scheme=scheme)
     configured = (os.getenv("GOOGLE_REDIRECT_URI") or "").strip()
