@@ -3,6 +3,7 @@ import json
 import os
 import unittest
 from unittest.mock import patch
+from urllib.error import HTTPError
 
 from flask import Flask
 import github_deploy
@@ -82,6 +83,31 @@ class GitHubDeployTests(unittest.TestCase):
         self.assertEqual(req.full_url, "https://bot-hosting.net/api/v1/deployments/e4fcc621-608a-48e3-abba-f939755001a2/sync")
         self.assertEqual(req.data, b"{}")
         self.assertEqual(req.get_header("Authorization"), "Bearer bhk_fake_test")
+
+    def test_404_reports_account_or_deployment_id_issue_without_token(self):
+        self.auth(admin=True)
+        not_found = HTTPError("https://bot-hosting.net/api/v1/deployments/id/sync", 404, "Not found", None, None)
+        with patch.dict(os.environ, {"BOT_HOSTING_API_KEY": "bhk_fake_test"}), \
+             patch.object(github_deploy, "_call_deployment_sync", side_effect=not_found), \
+             patch.object(github_deploy, "_verified_deployment_from_api",
+                          return_value=(None, "This API key sees no deployments.")):
+            result = self.client.post("/api/admin/github/pull", headers={"X-CSRF-Token": "test-csrf"})
+        self.assertEqual(result.status_code, 502)
+        self.assertIn("This API key sees no deployments", result.json["error"])
+        self.assertNotIn("bhk_fake_test", result.get_data(as_text=True))
+
+    def test_404_safe_recovery_requires_verified_f7_domain_and_repository(self):
+        self.auth(admin=True)
+        not_found = HTTPError("https://bot-hosting.net/api/v1/deployments/id/sync", 404, "Not found", None, None)
+        recovered_id = "dep_verified_f7_id"
+        with patch.dict(os.environ, {"BOT_HOSTING_API_KEY": "bhk_fake_test"}), \
+             patch.object(github_deploy, "_call_deployment_sync",
+                          side_effect=[not_found, {"ok": True, "commit": "abc123def"}]) as sync, \
+             patch.object(github_deploy, "_verified_deployment_from_api",
+                          return_value=(recovered_id, "Verified domain and GitHub.")):
+            result = self.client.post("/api/admin/github/pull", headers={"X-CSRF-Token": "test-csrf"})
+        self.assertEqual(result.status_code, 200, result.get_data(as_text=True))
+        self.assertEqual(sync.call_args_list[1].args[1], recovered_id)
 
     def test_pull_rejects_second_request_within_cooldown(self):
         self.auth(admin=True)
