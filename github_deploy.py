@@ -105,7 +105,7 @@ def register_github_deploy(app, current_user, is_admin):
         if not _PULL_LOCK.acquire(blocking=False):
             return jsonify({"error": "A GitHub sync request is already in progress."}), 409
         try:
-            if time.monotonic() - _LAST_PULL_AT < 45:
+            if _LAST_PULL_AT and time.monotonic() - _LAST_PULL_AT < 45:
                 return jsonify({"error": "A sync was requested recently. Allow the deployment to restart."}), 429
             _LAST_PULL_AT = time.monotonic()
             # A fixed target + empty JSON tells Bot-Hosting to retain its linked repo and branch.
