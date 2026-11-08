@@ -56,6 +56,83 @@ def _remote_commit():
         return None
 
 
+
+PUBLIC_DOMAIN = "s31tp7axkt.apps.bot-hosting.cloud"
+
+
+def _verified_deployment_from_api(token):
+    """Find the exact F7 deployment visible to the API key.
+
+    Never select based solely on a display name: both the public domain and
+    linked GitHub repository must match our known F7 website.
+    Requires deployments:read in addition to deployments:write.
+    Returns (deployment_id, diagnostic) for the admin UI.
+    """
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Accept": "application/json",
+        "User-Agent": "Jay-ACCA-FR-Portal",
+    }
+    req = Request("https://bot-hosting.net/api/v1/deployments", headers=headers)
+    try:
+        with urlopen(req, timeout=12) as res:
+            data = json.load(res)
+    except HTTPError as exc:
+        if exc.code in (401, 403):
+            return None, "The existing Bot-Hosting key cannot list deployments. Add deployments:read, and ensure the key belongs to the deployment owner or an authorised collaborator."
+        return None, "Could not look up deployments through Bot-Hosting (HTTP " + str(exc.code) + ")."
+    except (URLError, OSError, TimeoutError, ValueError):
+        return None, "Could not verify which deployments this API key can access."
+    deployments = data.get("deployments", []) if isinstance(data, dict) else []
+    if not isinstance(deployments, list):
+        return None, "The Bot-Hosting deployment list returned an unexpected format."
+    candidates = []
+    for row in deployments:
+        if not isinstance(row, dict):
+            continue
+        did = str(row.get("id", "")).strip()
+        if not did or not re.fullmatch(r"[A-Za-z0-9_-]{5,90}", did):
+            continue
+        domains = row.get("domains") or {}
+        if not isinstance(domains, dict):
+            continue
+        url = str(domains.get("url") or "")
+        subdomain = str(domains.get("subdomain") or "")
+        if PUBLIC_DOMAIN not in (url, subdomain) and not url.startswith("https://" + PUBLIC_DOMAIN):
+            continue
+        # Verify the connected source before allowing a remotely triggered restart.
+        req = Request("https://bot-hosting.net/api/v1/deployments/" + did + "/git", headers=headers)
+        try:
+            with urlopen(req, timeout=10) as response:
+                git_data = json.load(response)
+        except (HTTPError, URLError, ValueError, OSError, TimeoutError):
+            continue
+        if not isinstance(git_data, dict):
+            continue
+        if git_data.get("repo") == REPOSITORY and git_data.get("branch") == BRANCH:
+            candidates.append(did)
+    if len(candidates) == 1:
+        return candidates[0], "Verified the F7 domain and GitHub link using the API."
+    if not deployments:
+        return None, "This API key sees no deployments. Create a key from the Bot-Hosting account that owns this F7 deployment, or obtain authorised access."
+    return None, "The key can list deployments but cannot see the linked F7 website with the expected domain and GitHub repo. Check account permissions and deployment ownership."
+
+
+def _call_deployment_sync(token, did):
+    url = "https://bot-hosting.net/api/v1/deployments/" + did + "/sync"
+    req = Request(
+        url, data=b"{}",
+        headers={
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "Jay-ACCA-FR-Portal",
+        }, method="POST",
+    )
+    with urlopen(req, timeout=65) as response:
+        return json.load(response)
+
+
 def register_github_deploy(app, current_user, is_admin):
     """Install safe GET status and POST sync endpoints on the Flask application."""
     def admin_only():
@@ -110,26 +187,22 @@ def register_github_deploy(app, current_user, is_admin):
             _LAST_PULL_AT = time.monotonic()
             # A fixed target + empty JSON tells Bot-Hosting to retain its linked repo and branch.
             # The platform pulls from GitHub and restarts the deployment if it was running.
-            url = "https://bot-hosting.net/api/v1/deployments/" + deployment_id + "/sync"
-            req = Request(
-                url, data=b"{}",
-                headers={
-                    "Authorization": "Bearer " + token,
-                    "Content-Type": "application/json",
-                    "Accept": "application/json",
-                    "User-Agent": "Jay-ACCA-FR-Portal",
-                },
-                method="POST",
-            )
             try:
-                with urlopen(req, timeout=65) as response:
-                    data = json.load(response)
+                data = _call_deployment_sync(token, deployment_id)
             except HTTPError as exc:
                 if exc.code in (401, 403):
-                    return jsonify({"error": "Bot-Hosting rejected the API key or required deployments:write permission."}), 502
+                    return jsonify({"error": "Bot-Hosting rejected the key or the key lacks deployments:write access to this deployment. Confirm the account and key permissions."}), 502
                 if exc.code == 404:
-                    return jsonify({"error": "Bot-Hosting deployment was not found. Check BOT_HOSTING_DEPLOYMENT_ID."}), 502
-                return jsonify({"error": "Bot-Hosting could not sync the deployment (HTTP " + str(exc.code) + ")."}), 502
+                    resolved_id, why = _verified_deployment_from_api(token)
+                    if resolved_id and resolved_id != deployment_id:
+                        try:
+                            data = _call_deployment_sync(token, resolved_id)
+                        except HTTPError as retry_error:
+                            return jsonify({"error": "Deployment identified as " + resolved_id + " but sync failed (HTTP " + str(retry_error.code) + "). Check the key's deployments:write permission."}), 502
+                    else:
+                        return jsonify({"error": "Bot-Hosting returned 404 for deployment " + deployment_id + ". " + why + " You can use Pull now from the Bot-Hosting GitHub panel without this API key."}), 502
+                else:
+                    return jsonify({"error": "Bot-Hosting could not sync the deployment (HTTP " + str(exc.code) + ")."}), 502
             except (URLError, OSError, TimeoutError, ValueError):
                 # During a self-restart the connection can disappear before the API replies.
                 return jsonify({"error": "The sync response could not be confirmed. Check the deployment in Bot-Hosting before retrying."}), 502
