@@ -16,6 +16,7 @@ from urllib.request import Request, urlopen
 from flask import Flask, Response, abort, flash, has_request_context, jsonify, redirect, render_template_string, request, session, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
+from topic_tests import register_topic_tests
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.getenv("F7_DB_PATH", str(BASE_DIR / "f7_portal.db")))
@@ -774,7 +775,22 @@ window.addEventListener('load',function(){
 });
 </script>
 """.replace("__PROFILE__", profile)
-    return html.replace("</body>", patch + "\n</body>")
+    topic_tests_nav = """
+<script>
+window.addEventListener('load', function () {
+  if (document.getElementById('topicTestsNav')) return;
+  var anchor = document.querySelector('[data-pview="mocks"]') || document.querySelector('[data-pview="progress"]');
+  if (!anchor || !anchor.parentNode) return;
+  var button = document.createElement('button');
+  button.id = 'topicTestsNav';
+  button.className = 'portalNavBtn';
+  button.textContent = 'Topic Tests';
+  button.onclick = function () { window.location.href = '/topic-tests'; };
+  anchor.parentNode.insertBefore(button, anchor.nextSibling);
+});
+</script>
+"""
+    return html.replace("</body>", patch + topic_tests_nav + "\n</body>")
 
 @app.route("/")
 @login_required
@@ -796,6 +812,7 @@ def health():
 
 purge_legacy_f6_f8_data()
 init_db()
+register_topic_tests(app, db_connect, current_user, csrf_token)
 
 if __name__ == "__main__":
     port = int(os.getenv("SERVER_PORT", os.getenv("PORT", "5000")))
