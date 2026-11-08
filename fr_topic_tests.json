@@ -1,0 +1,198 @@
+{
+  "schema_version": 1,
+  "description": "Bank for the F7-only portal. Add new tests with new unique IDs. Never mutate questions for a test after submissions.",
+  "quizzes": [
+    {
+      "id": "fr-c2-1-profitability-2026-11-08-a",
+      "title": "FR Chapter 22 • C2.1 Profitability & Efficiency • Test A",
+      "topic": "C2.1 — Ratio interpretation",
+      "description": "40-mark ACCA-standard topic practice: gross margin, operating margin, ROCE, ROE, net asset turnover, and written Section C interpretation.",
+      "duration_minutes": 50,
+      "published": true,
+      "questions": [
+        {
+          "id": "q01",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Portline Co seeks long-term investors. An analyst wants to understand how effectively its long-term financing generates operating returns. Which ratio is most directly suitable?",
+          "options": [
+            "Current ratio",
+            "Return on capital employed (ROCE)",
+            "Dividend yield",
+            "Inventory holding period"
+          ],
+          "answer": 1,
+          "explanation": "ROCE relates profit before financing and income taxes to long-term capital employed; it does not by itself measure liquidity."
+        },
+        {
+          "id": "q02",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A retailer lowers its unit selling prices while unit purchase costs remain unchanged. Total revenue increases due to higher volumes. What is the best supported conclusion?",
+          "options": [
+            "The gross profit margin on these unchanged products is likely to fall; total gross profit still requires volume information.",
+            "Total gross profit necessarily increases.",
+            "Gross profit margin rises because total revenue increases.",
+            "Operating profit must fall by exactly the percentage price reduction."
+          ],
+          "answer": 0,
+          "explanation": "Lower unit selling prices with unchanged unit costs reduce the unit gross margin, but higher volumes may offset part or all of that effect on total profit."
+        },
+        {
+          "id": "q03",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Cedar Manufacturing reports revenue of $3.2 million and cost of sales of $2.08 million. Calculate gross profit margin.",
+          "options": [
+            "35.0%",
+            "40.0%",
+            "65.0%",
+            "28.0%"
+          ],
+          "answer": 0,
+          "explanation": "Gross profit is $1.12 million; margin = 1.12/3.2 ×100 = 35%."
+        },
+        {
+          "id": "q04",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Glacier Co's revenue is $2.7 million and operating profit is $378,000. What is operating profit margin?",
+          "options": [
+            "17%",
+            "12%",
+            "14%",
+            "72%"
+          ],
+          "answer": 2,
+          "explanation": "Operating profit margin = 378,000 / 2,700,000 × 100 = 14%."
+        },
+        {
+          "id": "q05",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Torres Co's revenue increased from $2.0m to $2.5m, while cost of sales increased from $1.2m to $1.65m. Which statement correctly describes gross profit margin?",
+          "options": [
+            "Increased from 34% to 40%, a rise of 6 percentage points.",
+            "Decreased from 40% to 34%, a fall of 6 percentage points.",
+            "Decreased from 40% to 25%, a fall of 15 percentage points.",
+            "Unchanged at 40% because revenue increased."
+          ],
+          "answer": 1,
+          "explanation": "Gross margins are (2.0-1.2)/2.0=40% and (2.5-1.65)/2.5=34%; decline is 6 percentage points."
+        },
+        {
+          "id": "q06",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Lumen Co has equity $1.6m, long-term bank borrowings $0.4m, current lease liability $0.1m, non-current lease liability $0.3m and trade payables $0.15m. Under Kaplan's equity-plus-interest-bearing-debt definition, what is capital employed?",
+          "options": [
+            "$2.40m",
+            "$2.55m",
+            "$2.30m",
+            "$2.00m"
+          ],
+          "answer": 0,
+          "explanation": "Capital employed = equity $1.6m + loan $0.4m + all lease liabilities $0.4m = $2.4m; trade payables are excluded."
+        },
+        {
+          "id": "q07",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Storm Co has profit before financing and income taxes of $330,000 and capital employed of $1.1 million. What is ROCE?",
+          "options": [
+            "33%",
+            "23%",
+            "30%",
+            "70%"
+          ],
+          "answer": 2,
+          "explanation": "ROCE = 330,000 / 1,100,000 ×100 = 30%."
+        },
+        {
+          "id": "q08",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Lark Co earns profit after income tax of $210,000 and has equity of $1.4 million. Using the supplied year-end equity, what is return on equity?",
+          "options": [
+            "20%",
+            "15%",
+            "12%",
+            "6.7%"
+          ],
+          "answer": 1,
+          "explanation": "ROE = 210,000 / 1,400,000 ×100 = 15%."
+        },
+        {
+          "id": "q09",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Monarch Co reports revenue of $6m and capital employed of $2m. What is net asset turnover?",
+          "options": [
+            "0.33 times",
+            "2 times",
+            "4 times",
+            "3 times"
+          ],
+          "answer": 3,
+          "explanation": "Net asset turnover = revenue / capital employed = 6/2 = 3 times."
+        },
+        {
+          "id": "q10",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Farrow Co has an operating profit margin of 10% and net asset turnover of 2.7 times. There is no separately reported investment income or non-operating gain, so operating profit equals PBFIT. What is ROCE?",
+          "options": [
+            "17%",
+            "27%",
+            "37%",
+            "2.7%"
+          ],
+          "answer": 1,
+          "explanation": "ROCE = operating profit margin × turnover = 10% × 2.7 = 27% where operating profit equals PBFIT."
+        },
+        {
+          "id": "q11",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Bracken Co's operating profit remains unchanged, but the company recognises a significant upward PPE revaluation at year-end. Which conclusion about its new ROCE is most justified?",
+          "options": [
+            "ROCE may decrease because equity and capital employed increase, even though operating profitability has not fallen.",
+            "ROCE must rise because revaluation gains always increase operating profit.",
+            "ROCE is unchanged because revaluations never affect financial ratios.",
+            "The fall in ROCE proves customers are paying lower prices."
+          ],
+          "answer": 0,
+          "explanation": "An upward revaluation increases capital employed through equity while PBFIT can stay unchanged; comparisons must allow for valuation policies."
+        },
+        {
+          "id": "q12",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Fjord Retail reports the same gross profit margin in both years, while operating profit margin falls and marketing expense as a percentage of sales rises. What is the best explanation?",
+          "options": [
+            "Higher cost of materials caused the fall in gross margin.",
+            "The company necessarily reduced selling prices.",
+            "Cost of sales must have grown faster than revenue.",
+            "Higher operating expenditure is a plausible cause of the reduced operating margin."
+          ],
+          "answer": 3,
+          "explanation": "Gross margin stayed unchanged, so rising marketing/operating expenses can explain the lower operating margin."
+        },
+        {
+          "id": "q13",
+          "type": "written",
+          "marks": 8,
+          "prompt": "Clover Foods has the following financial information (all amounts in $000):\n\n20X5: Revenue 1,000; cost of sales 600; operating profit and PBFIT 200; capital employed 800.\n20X6: Revenue 1,400; cost of sales 910; operating profit and PBFIT 182; capital employed 1,400.\n\nDuring 20X6, Clover offered larger customer discounts, packaging costs increased, and a significant marketing campaign took place. A new warehouse was acquired on 25 December 20X6 and is included in closing capital employed.\n\nRequired (8 marks): (a) Calculate gross profit margin, operating profit margin, ROCE and net asset turnover for BOTH years, showing formulas and workings. (4 marks) (b) Explain the changes using the scenario and give a balanced conclusion, including why the late warehouse acquisition affects interpretation. (4 marks).",
+          "marking_guide": "Examiner's marking guide (8): calculate GPM 40% and 35%; OPM 20% and 13%; ROCE 25% and 13%; net asset turnover 1.25 and 1.00, grouped up to 4 marks. Explain revenue growth 40%, GP growth 22.5%, absolute operating profit down 9%, discounts/packaging linked to margin decline, marketing linked to lower OPM, late warehouse capital employed before revenue contribution linked to ROCE and turnover, balanced conclusion / information uncertainty, up to 4 marks. Mark written answers strictly; no automatic marks."
+        },
+        {
+          "id": "q14",
+          "type": "written",
+          "marks": 8,
+          "prompt": "You are comparing Floret Ltd (high-volume discount retailer) and Holt Ltd (premium retailer). Assume neither reports investment income or other items between operating profit and PBFIT.\n\nFloret: Operating profit margin 9%; net asset turnover 4.0 times. It incurred a substantial launch advertising campaign this year.\nHolt: Operating profit margin 18%; net asset turnover 2.0 times. Its freehold property was revalued upwards immediately before year-end, increasing capital employed.\n\nRequired (8 marks): (a) Calculate ROCE for BOTH businesses and show workings. (2 marks) (b) Compare their business models and explain how the advertising expense and the revaluation could affect ratio comparisons. (4 marks) (c) Recommend TWO additional pieces of information a potential investor should obtain, explaining why each is useful. (2 marks).",
+          "marking_guide": "Examiner's marking guide (8): both ROCE = 36% (2); discount low margin/high turnover vs premium high margin/lower turnover, advertising depresses current operating margin but may generate future benefits, revaluation inflates Holt denominator and reduces ROCE without change in underlying operating performance, different assets/markets impair direct comparability (4); two focused nonfinancial or financial supporting information requests with reasons, e.g. like-for-like sales, age/condition and basis of asset valuation, cash flows, market/share and renewal costs (2)."
+        }
+      ]
+    }
+  ]
+}
