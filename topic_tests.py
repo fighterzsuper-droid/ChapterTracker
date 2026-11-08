@@ -38,42 +38,171 @@ button.secondary{background:#e8f1f7;color:#16476a}button.secondary:hover{backgro
 .result{font-size:24px;font-weight:900}.pre{white-space:pre-wrap;background:#f5f8fa;border:1px solid #dbe6ec;border-radius:8px;padding:13px;font-size:13px;line-height:1.5}
 .actions{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0}
 .error{color:#a52920}.good{color:#11744b}.toplink{margin-bottom:12px;display:inline-block}
-@media(max-width:600px){.wrap{padding:12px}.card{padding:15px}header{padding:13px}.toolbar{position:static}}
+
+body{display:flex;min-height:100vh}
+.portalSide{width:220px;flex:0 0 220px;height:100vh;position:sticky;top:0;background:#103a5c;color:#d6ecfa;display:flex;flex-direction:column;padding:18px 12px;gap:6px;overflow-y:auto}
+.portalBrand{color:#fff;font-size:20px;font-weight:900;padding:6px 10px 17px}
+.portalSide a{text-decoration:none;color:#cce2f3;font-size:13px;font-weight:700;padding:12px 13px;border-radius:8px;display:flex;justify-content:space-between;gap:5px}
+.portalSide a:hover,.portalSide a[aria-current="page"]{background:#19618e;color:#fff}
+.portalSide small{font-size:10px;color:#a7c6d9;line-height:1.5;padding:15px 10px;margin-top:auto}
+.portalShell{flex:1;min-width:0}
+.topicExamLayout{display:grid;grid-template-columns:212px minmax(0,1fr);gap:15px;align-items:start}
+.topicExamNav{position:sticky;top:90px;max-height:calc(100vh - 110px);overflow:auto}
+.topicNavGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0}
+.topicNavChip{border:1px solid #b9cad6;background:#f4f8fa;color:#28516a;border-radius:8px;padding:9px 0;font-size:13px}
+.topicNavChip.current{background:#0a6ca8;border-color:#0a6ca8;color:#fff}
+.topicNavChip.answered{border-color:#57aa84}
+.topicNavChip.flagged:after{content:" ⚑";font-size:9px}
+.topicNavLegend{font-size:11px;color:#637f92;line-height:1.5}
+.topicExamBody{min-width:0}
+.topicExamBody .question{display:none}
+.topicExamBody .question.current{display:block}
+.topicExamActions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.topicExamActions .right{margin-left:auto}
+#submitArea{margin-top:12px}
+#submitArea button{background:#126a4e}
+#submitArea .error{margin-top:10px}
+.topicNavToggle{display:none}
+@media(max-width:1000px){.portalSide{width:180px;flex-basis:180px}.topicExamLayout{grid-template-columns:180px minmax(0,1fr)}}
+@media(max-width:760px){
+ body{display:block}.portalSide{width:100%;height:auto;position:static;flex-direction:row;overflow:auto;white-space:nowrap;padding:8px}
+ .portalBrand{font-size:14px;padding:9px}.portalSide a{padding:9px;font-size:12px}
+ .portalSide small{display:none}.topicExamLayout{display:block}
+ .topicExamNav{position:static;max-height:none;display:none}.topicExamNav.open{display:block}
+ .topicNavToggle{display:inline-block}.wrap{padding:12px}.card{padding:15px}header{padding:13px}.toolbar{position:static}
+}
+
 </style></head><body data-csrf="{{ csrf }}">
-<header><strong>ACCA FR / F7</strong><span>Topic Tests</span><span class="push"></span><a href="/">Dashboard</a></header>
+<nav class="portalSide" aria-label="F7 portal sections">
+<div class="portalBrand">ACCA FR / F7</div>
+<a href="/?panel=overview">Dashboard <span>›</span></a>
+<a href="/?panel=mocks">Mock Exams <span>›</span></a>
+<a href="/topic-tests" aria-current="page">Topic Tests <span>›</span></a>
+<a href="/?panel=history">Mock History <span>›</span></a>
+<a href="/?panel=retests">Retests <span>›</span></a>
+<a href="/?panel=analytics">Analytics <span>›</span></a>
+<a href="/?panel=progress">Progress <span>›</span></a>
+<a href="/?panel=management">Management <span>›</span></a>
+<small>Your submitted attempts are saved to your account. Draft answers remain in this browser until submission.</small>
+</nav>
+<div class="portalShell">
+<header><strong>ACCA FR / F7</strong><span>Topic Tests</span><span class="push"></span><a href="/?panel=overview">Home</a></header>
 <main class="wrap"><section id="intro"><h1>Chapter practice tests</h1>
 <p class="muted">Complete all objective and written answers on this site. MCQs are marked on submission; written answers are saved for strict tutor marking. Past attempts remain accessible.</p>
 <div id="catalog" class="grid"></div>
 <h2>Your previous submissions</h2><div id="history"></div></section>
-<section id="exam" class="hidden"><div class="toolbar"><button class="secondary" id="exit">Back to tests</button><div><b id="examTitle"></b><span class="pill" id="timer">50:00</span></div><span id="answered" class="muted"></span></div>
-<div class="card"><p class="muted">40 marks · 12 MCQs (2 marks each) + 2 constructed responses (8 marks each). Recommended closed-book timing. Answers autosave in this browser until submitted.</p></div>
+<section id="exam" class="hidden">
+<div class="toolbar">
+<div class="topicExamActions"><button class="secondary" id="exit">Save & Back to Tests</button><button class="secondary" id="exitHome">Save & Exit to Home</button><button class="secondary topicNavToggle" id="navToggle">Navigator</button></div>
+<div><b id="examTitle"></b><span class="pill" id="timer">50:00</span></div><span id="answered" class="muted"></span>
+</div>
+<div class="card"><p class="muted">12 MCQs × 2 marks + 2 written × 8 marks = 40 marks. Skip does not submit or score your test. Draft answers autosave in this browser. Only Submit records a graded attempt.</p></div>
+<div class="topicExamLayout">
+<aside id="topicNav" class="topicExamNav card" aria-label="Question navigator">
+<strong>Question Navigator</strong><p id="qPosition" class="muted">Question 1 of 14</p>
+<div id="qNavGrid" class="topicNavGrid"></div>
+<p class="topicNavLegend">Blue: current. Green border: answered. Flag: review later.</p>
+<button class="secondary" id="navClose">Close Navigator</button>
+</aside>
+<div class="topicExamBody">
 <div id="questions"></div>
-<div class="card"><label><input type="checkbox" id="confirm"> I have reviewed my answers and am ready to submit this attempt.</label>
-<div class="actions"><button id="submit">Submit all answers</button></div><div id="validation" class="error" role="alert"></div></div>
+<div class="card topicExamActions">
+<button class="secondary" id="qPrev">← Previous</button>
+<button class="secondary" id="qFlag">Flag for Review</button>
+<div class="right"></div>
+<button class="secondary" id="qSkip">Skip →</button>
+<button id="qNext">Next →</button>
+</div>
+<div class="card" id="submitArea"><label><input type="checkbox" id="confirm"> I have answered all questions and want to submit this attempt for marking.</label>
+<div class="actions"><button id="submit">Submit for marking</button></div><div id="validation" class="error" role="alert"></div></div>
+</div></div>
 </section>
 <section id="review" class="hidden"><button class="secondary" id="backHistory">Back to Topic Tests</button><div class="card" id="reviewContent"></div></section>
-</main>
+</main></div>
 <script>
 (function(){
 'use strict';
 const csrf=document.body.dataset.csrf;
 const intro=document.getElementById('intro'),exam=document.getElementById('exam'),review=document.getElementById('review');
-let active=null,startTime=null,ticker=null,userKey=null,reviewRecord=null;
+let active=null,startTime=null,ticker=null,userKey=null,reviewRecord=null,currentIndex=0,flags={};
 const el=(tag,cls,txt)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(txt!==undefined)x.textContent=txt;return x;};
 const show=(which)=>{intro.classList.toggle('hidden',which!=='intro');exam.classList.toggle('hidden',which!=='exam');review.classList.toggle('hidden',which!=='review');window.scrollTo(0,0)};
 const niceDate=(s)=>{try{return new Date(s).toLocaleString()}catch(e){return s}};
 async function api(path,opts){const res=await fetch(path,Object.assign({credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf}},opts||{}));const body=await res.json();if(!res.ok)throw new Error(body.error||'Request failed');return body}
 const draftKey=()=> 'fr-topic-draft:'+userKey+':'+active.id;
 const timeKey=()=> 'fr-topic-start:'+userKey+':'+active.id;
-function saveDraft(){if(!active)return;const answers={};active.questions.forEach(q=>{if(q.type==='mcq'){const x=document.querySelector('input[name="'+q.id+'"]:checked');if(x)answers[q.id]=Number(x.value)}else{const t=document.getElementById('ans-'+q.id);answers[q.id]=t?t.value:''}});localStorage.setItem(draftKey(),JSON.stringify(answers));updateAnswered()}
+const flagKey=()=> 'fr-topic-flags:'+userKey+':'+active.id;
+function saveDraft(){if(!active)return;const answers={};active.questions.forEach(q=>{if(q.type==='mcq'){const x=document.querySelector('input[name="'+q.id+'"]:checked');if(x)answers[q.id]=Number(x.value)}else{const t=document.getElementById('ans-'+q.id);answers[q.id]=t?t.value:''}});localStorage.setItem(draftKey(),JSON.stringify(answers));updateAnswered();renderQuestionNav()}
 function readDraft(){try{return JSON.parse(localStorage.getItem(draftKey())||'{}')}catch(e){return {}}}
 function updateAnswered(){if(!active)return;let n=0;active.questions.forEach(q=>{if(q.type==='mcq'){if(document.querySelector('input[name="'+q.id+'"]:checked'))n++}else{const t=document.getElementById('ans-'+q.id);if(t&&t.value.trim())n++}});document.getElementById('answered').textContent=n+'/'+active.questions.length+' answered'}
 function startTimer(){if(ticker)clearInterval(ticker);let saved=localStorage.getItem(timeKey());if(!saved||!Number(saved)){saved=String(Date.now());localStorage.setItem(timeKey(),saved)}startTime=Number(saved);const update=()=>{const seconds=Math.max(0,(active.duration_minutes||50)*60-Math.floor((Date.now()-startTime)/1000));document.getElementById('timer').textContent=(seconds<=0?'Time elapsed · ':'')+String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');};update();ticker=setInterval(update,1000)}
+
+function questionAnswered(q){
+  if(q.type==='mcq')return !!document.querySelector('input[name="'+q.id+'"]:checked');
+  const t=document.getElementById('ans-'+q.id);return !!(t&&t.value.trim());
+}
+function renderQuestionNav(){
+  if(!active)return;
+  const nav=document.getElementById('qNavGrid');nav.replaceChildren();
+  active.questions.forEach((q,i)=>{
+    const btn=el('button','topicNavChip',String(i+1));
+    btn.classList.toggle('current',i===currentIndex);
+    btn.classList.toggle('answered',questionAnswered(q));
+    btn.classList.toggle('flagged',!!flags[q.id]);
+    btn.title='Question '+(i+1)+(questionAnswered(q)?' · answered':' · unanswered')+(flags[q.id]?' · flagged':'');
+    btn.type='button';btn.onclick=()=>gotoQuestion(i);nav.appendChild(btn);
+  });
+  document.getElementById('qPosition').textContent='Question '+(currentIndex+1)+' of '+active.questions.length;
+  document.getElementById('qPrev').disabled=currentIndex===0;
+  document.getElementById('qNext').disabled=currentIndex===active.questions.length-1;
+  document.getElementById('qSkip').disabled=currentIndex===active.questions.length-1;
+  document.getElementById('qFlag').textContent=flags[active.questions[currentIndex].id]?'⚑ Remove Flag':'⚑ Flag for Review';
+}
+function gotoQuestion(i){
+  if(!active)return;
+  currentIndex=Math.min(active.questions.length-1,Math.max(0,i));
+  document.querySelectorAll('#questions .question').forEach((card,j)=>card.classList.toggle('current',j===currentIndex));
+  renderQuestionNav();
+  window.scrollTo({top:0,behavior:'instant'});
+}
+function toggleQuestionFlag(){
+  if(!active)return;
+  const id=active.questions[currentIndex].id;flags[id]=!flags[id];
+  localStorage.setItem(flagKey(),JSON.stringify(flags));renderQuestionNav();
+}
+function leaveTopicTest(home){
+  if(!active){if(home)window.location.assign('/?panel=overview');else show('intro');return}
+  saveDraft();
+  if(!confirm('Your answers are saved as a draft in this browser. Exit without submitting or recording a score?'))return;
+  if(ticker)clearInterval(ticker);active=null;
+  if(home){window.location.assign('/?panel=overview');return}
+  loadList().then(()=>show('intro')).catch(report);
+}
+document.addEventListener('keydown',function(ev){
+  if(!active||exam.classList.contains('hidden')||ev.altKey||ev.ctrlKey||ev.metaKey)return;
+  if(ev.target.closest('input,textarea,select,[contenteditable]'))return;
+  if(ev.key==='ArrowRight'){ev.preventDefault();gotoQuestion(currentIndex+1)}
+  else if(ev.key==='ArrowLeft'){ev.preventDefault();gotoQuestion(currentIndex-1)}
+});
+window.addEventListener('pagehide',function(){if(active)saveDraft()});
+document.getElementById('qPrev').onclick=()=>gotoQuestion(currentIndex-1);
+document.getElementById('qNext').onclick=()=>gotoQuestion(currentIndex+1);
+document.getElementById('qSkip').onclick=()=>gotoQuestion(currentIndex+1);
+document.getElementById('qFlag').onclick=toggleQuestionFlag;
+document.getElementById('exitHome').onclick=()=>leaveTopicTest(true);
+document.getElementById('navToggle').onclick=()=>document.getElementById('topicNav').classList.toggle('open');
+document.getElementById('navClose').onclick=()=>document.getElementById('topicNav').classList.remove('open');
+document.querySelectorAll('.portalSide a,header a').forEach(a=>a.addEventListener('click',function(ev){
+ if(!active)return;ev.preventDefault();saveDraft();
+ if(!confirm('Exit this unfinished topic test without submitting? Your answers are saved as a draft in this browser.'))return;
+ window.location.assign(a.href);
+}));
+
 async function openQuiz(id){
   const data=await api('/api/topic-tests/'+encodeURIComponent(id));active=data.quiz;userKey=data.user_key;
   document.getElementById('examTitle').textContent=active.title;
   const container=document.getElementById('questions');container.replaceChildren();
-  const saved=readDraft();
+  const saved=readDraft();currentIndex=0;try{flags=JSON.parse(localStorage.getItem(flagKey())||'{}')}catch(e){flags={}}
   active.questions.forEach((q,index)=>{
     const card=el('section','card question');
     const hdr=el('h3','',String(index+1)+'. '+q.prompt);card.appendChild(hdr);
@@ -87,7 +216,7 @@ async function openQuiz(id){
     container.appendChild(card);
   });
   document.getElementById('confirm').checked=false;document.getElementById('validation').textContent='';
-  show('exam');updateAnswered();startTimer();
+  show('exam');gotoQuestion(0);updateAnswered();startTimer();
 }
 async function loadList(){
   const [catalog,history]=await Promise.all([api('/api/topic-tests'),api('/api/topic-tests/history')]);
@@ -119,7 +248,7 @@ async function showAttempt(id){
   show('review');
 }
 function report(e){alert(e.message||String(e))}
-document.getElementById('exit').onclick=()=>{if(ticker)clearInterval(ticker);active=null;loadList().then(()=>show('intro')).catch(report)};
+document.getElementById('exit').onclick=()=>leaveTopicTest(false);
 document.getElementById('backHistory').onclick=()=>{loadList().then(()=>show('intro')).catch(report)};
 document.getElementById('submit').onclick=async()=>{
   if(!active)return;
@@ -131,7 +260,7 @@ document.getElementById('submit').onclick=async()=>{
   const btn=document.getElementById('submit');btn.disabled=true;
   try{
     const r=await api('/api/topic-tests/'+active.id+'/submit',{method:'POST',body:JSON.stringify({answers:answers})});
-    localStorage.removeItem(draftKey());localStorage.removeItem(timeKey());if(ticker)clearInterval(ticker);active=null;
+    localStorage.removeItem(draftKey());localStorage.removeItem(timeKey());localStorage.removeItem(flagKey());if(ticker)clearInterval(ticker);active=null;
     await showAttempt(r.attempt_id);
   }catch(e){report(e)}finally{btn.disabled=false}
 };
