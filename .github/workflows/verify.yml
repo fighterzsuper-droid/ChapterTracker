@@ -17,7 +17,55 @@ jobs:
         with:
           node-version: "22"
       - run: python -m pip install -r requirements.txt
-      - run: python -m py_compile app.py
+      - run: python -m py_compile app.py topic_tests.py
+      - name: Verify chapter question bank and authenticated topic-test submission
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import app
+          from topic_tests import PAGE
+          bank = json.loads(Path('fr_topic_tests.json').read_text())
+          q = bank['quizzes'][0]
+          questions = q['questions']
+          assert len(questions) == 14
+          assert sum(item['marks'] for item in questions) == 40
+          assert sum(item['type'] == 'mcq' for item in questions) == 12
+          assert sum(item['type'] == 'written' for item in questions) == 2
+          assert all(len(item.get('options', [])) == 4 for item in questions[:12])
+          with app.app.test_client() as client:
+              assert client.get('/topic-tests').status_code == 302
+              conn = app.db_connect()
+              now = app.utc_now()
+              cur = conn.execute("INSERT INTO users (username,email,display_name,created_at,updated_at) VALUES (?,?,?,?,?)", ('ci-fr-test', 'ci@example.invalid', 'CI Test', now, now))
+              conn.commit()
+              user_id = cur.lastrowid
+              conn.close()
+              with client.session_transaction() as s:
+                  s['user_id'] = user_id
+              resp = client.get('/topic-tests')
+              assert resp.status_code == 200, resp.status_code
+              assert b'Chapter practice tests' in resp.data
+              listing = client.get('/api/topic-tests').get_json()
+              assert any(x['id'] == q['id'] for x in listing['quizzes'])
+              served = client.get('/api/topic-tests/' + q['id']).get_json()
+              assert len(served['quiz']['questions']) == 14
+              assert all('answer' not in item and 'marking_guide' not in item for item in served['quiz']['questions'])
+              with client.session_transaction() as s:
+                  csrf = s['csrf_token']
+              answers = {item['id']: item['answer'] if item['type'] == 'mcq' else 'Scenario-specific calculations and conclusions for manual marking.' for item in questions}
+              resp = client.post('/api/topic-tests/' + q['id'] + '/submit', json={'answers': answers}, headers={'X-CSRF-Token': csrf})
+              assert resp.status_code == 200, (resp.status_code, resp.data)
+              assert resp.get_json()['objective_score'] == 24
+              aid = resp.get_json()['attempt_id']
+              review = client.get('/api/topic-tests/submissions/' + str(aid)).get_json()
+              assert review['objective_score'] == 24
+              assert len(review['answers']) == 14
+              assert len(client.get('/api/topic-tests/history').get_json()['attempts']) == 1
+          Path('/tmp/topic-tests.js').write_text(PAGE.split('<script>',1)[1].split('</script>',1)[0], encoding='utf-8')
+          print('Authenticated topic test routes + answer submission OK')
+          PY
+          node --check /tmp/topic-tests.js
       - name: Verify FR portal package
         run: |
           python - <<'PY'
