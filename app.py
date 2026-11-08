@@ -833,7 +833,7 @@ window.addEventListener('load',function(){
   }catch(e){console.error('Hosted FR initialization failed',e)}
 });
 </script>
-""".replace("__PROFILE__", profile).replace("__GITHUB_CSRF__", json.dumps(csrf_token()).replace("</", "<\\/"))
+""".replace("__PROFILE__", profile).replace("__GITHUB_CSRF__", json.dumps(csrf_token() if has_request_context() else "").replace("</", "<\\/"))
     topic_tests_nav = """
 <script>
 window.addEventListener('load', function () {
