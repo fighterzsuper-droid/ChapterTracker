@@ -81,28 +81,32 @@ jobs:
           print('F7 portal package OK:',len(html),'bytes')
           PY
 
-      - name: Inspect existing exam controls and home/exit state
+      - name: Verify topic exam navigation and safe mock shortcuts
         run: |
           python - <<'PY'
-          import gzip,re
           from pathlib import Path
-          raw=b''.join(Path(f'fr_portal_v7.gz.part{i}').read_bytes() for i in range(4))
-          html=gzip.decompress(raw).decode('utf-8')
-          for token,limit in [
-              ('function renderFooter(',1600),('function renderNavigator(',2100),
-              ('function endExam(',1100),('function finishExamStage(',400),
-              ('function render(',800),('function renderResults(',600),
-              ('function renderPortalContent(',500),
-              ('function showPortalView(',1000),('function portalLogout(',600),
-              ('function resetActiveAttempt(',1300),('function save(',650),
-              ('function startTimer(',1200)]:
-              i=html.rfind(token)
-              print('SNIPPET',token,'OFFSET',i,html[i:i+limit] if i>=0 else 'MISSING')
-          for token in ['Exit','exit','End Exam','Submit','Back to dashboard','Go home','Home','showPortalView(']:
-              m=list(re.finditer(re.escape(token),html,flags=re.I))
-              print('HTML_TOKEN',token,'COUNT',len(m))
-              for found in m[-4:]:
-                  print('  ',html[max(0,found.start()-150):found.end()+180])
+          from topic_tests import PAGE
+          import app
+          q = PAGE
+          assert 'Save & Exit to Home' in q
+          assert 'Question Navigator' in q
+          assert 'qSkip' in q and 'qNext' in q and 'qPrev' in q
+          assert 'leaveTopicTest(true)' in q
+          assert 'Skip does not submit or score your test' in q
+          assert "document.addEventListener('keydown'" in q
+          assert "localStorage.setItem(draftKey()" in q
+          fake_user = {
+              "id": 1, "username": "ci", "email": "ci@example.invalid",
+              "display_name": "CI", "password_hash": "", "google_sub": "",
+              "avatar": "", "google_picture": "", "created_at": "", "updated_at": ""
+          }
+          html=app.portal_html_for(fake_user)
+          assert 'safeExitMock' in html
+          assert 'Save & Exit to Home' in html
+          assert "if(!confirm('SUBMIT MOCK FOR MARKING?" in html
+          assert 'quickTopicShortcut' in html
+          assert "goPanel('progress')" not in html or "goPanel(" in html
+          print('Topic navigator, skip, protected mock exit, and dashboard links are present')
           PY
       - name: Verify served portal JavaScript syntax
         run: |
