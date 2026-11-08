@@ -45,7 +45,9 @@ which pulls the linked repository and restarts the live Python app.
 **One-time setup:**
 
 1. In Bot-Hosting, open **Account → Developer** and create an API key with the
-   `deployments:write` scope. No GitHub personal access token is needed.
+   `deployments:write` and `deployments:read` scopes. The read scope allows
+   the site to diagnose a 404 and identify the correct F7 deployment. No
+   GitHub personal access token is needed.
 2. Save it as the **private** Bot-Hosting environment variable `BOT_HOSTING_API_KEY`.
    Never place it in GitHub, website JavaScript, or a chat message.
 3. The default deployment ID is the existing F7 website deployment. If moved or
@@ -53,11 +55,31 @@ which pulls the linked repository and restarts the live Python app.
 4. Use Bot-Hosting **GitHub → Pull now** or restart once to deploy this feature.
    Thereafter the website's Management button can request future pulls.
 
+If **Pull latest commits** displays a 404, the API key may not be authorised
+for this deployment even when the Bot-Hosting dashboard can see it. Confirm the
+key belongs to the deployment owner or an account granted access, and that it
+has both read/write deployment scopes. The website now verifies any recovered
+ID against BOTH the known F7 public URL and linked GitHub repo before retrying.
+You can always use the Bot-Hosting dashboard's **GitHub → Pull now** as a fallback.
+
 The admin API requires the signed-in administrator account and a CSRF token.
 It never accepts a repository, branch or arbitrary command from the client.
 Pulls can interrupt in-progress tests; save work before confirming.
 Do not mark a deployment as updated until Bot-Hosting confirms the operation.
 The persistent `F7_DB_PATH` database is not altered by this feature.
+
+## Navigation and exam safety
+
+- The Topic Tests area has the same section links as the main portal, a
+  14-question navigator, skip/previous/next, flag-for-review and keyboard
+  left/right navigation (outside text inputs).
+- **Save & Exit to Home** and **Save & Back to Tests** keep local drafts without
+  recording a grade. Only explicit confirmed submissions create attempts.
+- Mock Exams also have a **Save & Exit to Home** control and a confirmation
+  warning before the explicit scoring action, so visiting Question 32
+  cannot silently create a zero-mark attempt.
+- Dashboard metric cards and headings have direct arrows to the relevant
+  History, Analytics, Retests, Mocks, Topic Tests, and Progress areas.
 
 ## Bot-Hosting variables
 
