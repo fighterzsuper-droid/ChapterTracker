@@ -970,7 +970,8 @@ window.addEventListener('load',function(){
 });
 })();
 </script>
-"""    return html.replace("</body>", patch + topic_tests_nav + safe_exam_ui + "\n</body>")
+"""
+    return html.replace("</body>", patch + topic_tests_nav + safe_exam_ui + "\n</body>")
 
 @app.route("/")
 @login_required
