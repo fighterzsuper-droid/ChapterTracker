@@ -17,6 +17,7 @@ from flask import Flask, Response, abort, flash, has_request_context, jsonify, r
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import check_password_hash, generate_password_hash
 from topic_tests import register_topic_tests
+from github_deploy import register_github_deploy
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.getenv("F7_DB_PATH", str(BASE_DIR / "f7_portal.db")))
@@ -586,12 +587,24 @@ def portal_html_for(user):
 .topicCheck{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:800;color:#4e697c;background:#f5f8fa;border:1px solid #dbe4ea;border-radius:7px;padding:7px 8px;cursor:pointer}
 .topicCheck input{accent-color:#0b70b7}
 .topicDelete{border:0;background:#fff0ef;color:#a12a22;border-radius:7px;padding:7px 9px;font-weight:800;cursor:pointer}
+.gitSyncBox{grid-column:1/-1;border:1px solid #ccdce8;background:linear-gradient(135deg,#f7fbfe,#fff);border-radius:12px;padding:16px 18px;margin:0 0 14px;box-shadow:0 5px 18px rgba(31,65,90,.04)}
+.gitSyncBox h3{font-size:16px;color:#173d5a;margin:0 0 5px}
+.gitSyncBox p{font-size:12px;line-height:1.5;color:#5d7486;margin:5px 0 12px}
+.gitSyncRow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.gitSyncPill{border:1px solid #d7e5ef;background:#edf5fa;color:#24597d;padding:5px 8px;border-radius:30px;font-size:10px;font-weight:800}
+.gitSyncActions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.gitSyncActions a{font-size:12px;color:#176b9b;font-weight:800}
+.gitSyncStatus{background:#f1f6fa;border:1px solid #d7e5ec;padding:10px;border-radius:8px;white-space:pre-wrap;font-size:12px;color:#24475f;line-height:1.55;margin-bottom:11px}
+.gitSyncStatus.error{background:#fff2f1;border-color:#f1d4d1;color:#972d25}
+.gitSyncBox button:disabled{opacity:.55;cursor:not-allowed}
+
 .accessDenied{display:grid;place-items:center;height:100%;text-align:center;color:#5f7384}
 @media(max-height:760px){.dashboardV8{grid-template-rows:96px 86px 1fr}.progressHero{padding:12px 17px}.progressTitle{font-size:17px}.progressPercent{font-size:30px}.metricGridV8 .metricCard{padding:9px 12px}}
 </style></head>""")
     patch = r"""
 <script>
 window.__HOSTED_F7_USER__=__PROFILE__;
+window.__HOSTED_GITHUB_CSRF__=__GITHUB_CSRF__;
 function __applyHostedProfile(p){
   try{
     if(typeof portalMeta==='undefined')return;
@@ -678,9 +691,55 @@ function portalOverviewV8(){
   (recent.length?'<table class="miniHistory"><thead><tr><th>Date</th><th>Mock</th><th>Objective</th></tr></thead><tbody>'+recent.map(function(h){return '<tr><td>'+__esc(formatDateShort(h.date))+'</td><td>'+__esc(mockName(h.mockId||'mock1'))+'</td><td class="miniScore">'+(h.score==null?0:h.score)+'/60</td></tr>'}).join('')+'</tbody></table>':'<div class="emptyState">No completed tests yet.</div>')+
   '</div></div></div></div>';
 }
+function __githubSyncHtml(){
+  return '<div class="gitSyncBox"><h3>GitHub deployment updates</h3>'+
+  '<p>Check for new commits and safely update this F7 website from its linked GitHub repository. Only the administrator can trigger a pull; active users may be disconnected during restart.</p>'+
+  '<div class="gitSyncRow"><span class="gitSyncPill">fighterzsuper-droid/ChapterTracker</span><span class="gitSyncPill">branch: main</span><span class="gitSyncPill">Bot-Hosting</span></div>'+
+  '<div id="gitSyncStatus" class="gitSyncStatus" aria-live="polite">Checking connection...</div>'+
+  '<div class="gitSyncActions"><button class="portalBtn" onclick="__checkGitHubUpdates()">Check for updates</button>'+
+  '<button class="portalBtn primary" id="gitSyncPullButton" disabled onclick="__pullLatestGitHub()">Pull latest commits & restart</button>'+
+  '<a href="https://bot-hosting.net/a/d/e4fcc621-608a-48e3-abba-f939755001a2/github" target="_blank" rel="noopener noreferrer">Bot-Hosting GitHub settings</a></div>'+
+  '<p id="gitSyncSetup" class="muted" style="margin-top:10px"></p></div>';
+}
+function __shortCommit(sha){return sha?String(sha).slice(0,9):'unavailable'}
+function __gitSyncMessage(msg,isError){
+  var target=document.getElementById('gitSyncStatus');if(!target)return;
+  target.textContent=msg;target.classList.toggle('error',!!isError);
+}
+async function __checkGitHubUpdates(){
+  if(!__isHostedAdmin())return;
+  var btn=document.getElementById('gitSyncPullButton');if(btn)btn.disabled=true;
+  __gitSyncMessage('Checking latest commit and deployment configuration...',false);
+  try{
+    var res=await fetch('/api/admin/github/status',{credentials:'same-origin',cache:'no-store'});
+    var data=await res.json();
+    if(!res.ok)throw new Error(data.error||'Could not retrieve GitHub status.');
+    var comparison=(data.update_available===true?'A newer commit is available.':data.update_available===false?'Running checkout matches latest GitHub commit.':'Deployed commit could not be checked on this host.');
+    __gitSyncMessage('Latest on GitHub: '+__shortCommit(data.remote_commit)+'\nRunning checkout: '+__shortCommit(data.running_commit)+'\n'+comparison+
+      (data.configured?'\nSecure Bot-Hosting sync: ready.':'\nSecure Bot-Hosting sync: needs API key configuration.'),false);
+    var setup=document.getElementById('gitSyncSetup');
+    if(setup)setup.textContent=data.setup_hint||'Sync uses Bot-Hosting API to pull the linked repository and restart the deployment. Saved answers remain on persistent storage.';
+    if(btn)btn.disabled=!data.configured;
+  }catch(e){__gitSyncMessage(String(e.message||e),true);if(btn)btn.disabled=true}
+}
+async function __pullLatestGitHub(){
+  if(!__isHostedAdmin())return;
+  if(!confirm('Pull the latest main-branch commits from GitHub and restart the website? Active exams may be interrupted. Save any work before proceeding.'))return;
+  var btn=document.getElementById('gitSyncPullButton');
+  if(btn){btn.disabled=true;btn.textContent='Requesting sync...'}
+  __gitSyncMessage('Contacting Bot-Hosting. The website may disconnect while it restarts...',false);
+  try{
+    var response=await fetch('/api/admin/github/pull',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':window.__HOSTED_GITHUB_CSRF__||''},body:'{}'});
+    var data=await response.json().catch(function(){return {}});
+    if(!response.ok)throw new Error(data.error||'Bot-Hosting did not confirm the pull.');
+    __gitSyncMessage('GitHub sync confirmed'+(data.commit?' at '+__shortCommit(data.commit):'')+'. The deployment is restarting. Reopen or refresh the website once it is available.',false);
+  }catch(e){__gitSyncMessage('Sync not confirmed: '+String(e.message||e)+'\nIf the connection dropped during restart, check Bot-Hosting before retrying.',true)}
+  finally{if(btn){btn.textContent='Pull latest commits & restart';btn.disabled=false}}
+}
+
 function __mockManagementHtml(){
   var mocks=loadedMocks();
-  return '<div class="managementBody"><div class="importPanel"><div class="importDrop"><h3>Import mock file</h3><p>Upload a structured FR/F7 JSON mock. It becomes available in Mock Exams immediately.</p><input id="mockFileInput" class="filePicker" type="file" accept=".json,application/json"><button class="portalBtn primary" onclick="importMockFile()">Import selected file</button> <button class="portalBtn" onclick="downloadMockTemplate()">Download template</button><div id="importStatus" class="importStatus"></div></div><div class="schemaBox">30 objective questions + Q31/Q32 Section C.</div></div><div class="mockAdminList">'+mocks.map(function(m){return '<div class="adminMockRow"><div><h4>'+__esc(m.title)+' · '+(m.available?'Available':'Not loaded')+'</h4><p>'+__esc(m.id)+' · '+(m.durationMinutes||180)+' min · '+(m.data?'Imported':'Built-in/placeholder')+'</p></div><div class="adminActions"><button class="actionMini" onclick="editMockMeta(\''+m.id+'\')">Edit</button>'+(m.id!=='mock1'?'<button class="actionMini" onclick="toggleMockAvailable(\''+m.id+'\')">'+(m.available?'Disable':'Enable')+'</button><button class="actionMini" onclick="deleteMock(\''+m.id+'\')">Delete</button>':'')+'</div></div>'}).join('')+'</div></div>';
+  return '<div class="managementBody">'+__githubSyncHtml()+'<div class="importPanel"><div class="importDrop"><h3>Import mock file</h3><p>Upload a structured FR/F7 JSON mock. It becomes available in Mock Exams immediately.</p><input id="mockFileInput" class="filePicker" type="file" accept=".json,application/json"><button class="portalBtn primary" onclick="importMockFile()">Import selected file</button> <button class="portalBtn" onclick="downloadMockTemplate()">Download template</button><div id="importStatus" class="importStatus"></div></div><div class="schemaBox">30 objective questions + Q31/Q32 Section C.</div></div><div class="mockAdminList">'+mocks.map(function(m){return '<div class="adminMockRow"><div><h4>'+__esc(m.title)+' · '+(m.available?'Available':'Not loaded')+'</h4><p>'+__esc(m.id)+' · '+(m.durationMinutes||180)+' min · '+(m.data?'Imported':'Built-in/placeholder')+'</p></div><div class="adminActions"><button class="actionMini" onclick="editMockMeta(\''+m.id+'\')">Edit</button>'+(m.id!=='mock1'?'<button class="actionMini" onclick="toggleMockAvailable(\''+m.id+'\')">'+(m.available?'Disable':'Enable')+'</button><button class="actionMini" onclick="deleteMock(\''+m.id+'\')">Delete</button>':'')+'</div></div>'}).join('')+'</div></div>';
 }
 function __topicManagementHtml(){
   var s=__topicSummary();
@@ -749,7 +808,7 @@ function __showHostedView(view){
   var meta=map[view]||map.overview;
   document.getElementById('portalTitle').textContent=meta[0];document.getElementById('portalSub').textContent=meta[1];
   document.getElementById('portalContent').classList.toggle('scrollView',['progress','management','settings','mocks'].includes(view));
-  closeProfilePopover();__renderHostedPortal();
+  closeProfilePopover();__renderHostedPortal();if(view==='management'&&__isHostedAdmin())__checkGitHubUpdates();
 }
 
 window.addEventListener('load',function(){
@@ -774,7 +833,7 @@ window.addEventListener('load',function(){
   }catch(e){console.error('Hosted FR initialization failed',e)}
 });
 </script>
-""".replace("__PROFILE__", profile)
+""".replace("__PROFILE__", profile).replace("__GITHUB_CSRF__", json.dumps(csrf_token()).replace("</", "<\\/"))
     topic_tests_nav = """
 <script>
 window.addEventListener('load', function () {
@@ -813,6 +872,7 @@ def health():
 purge_legacy_f6_f8_data()
 init_db()
 register_topic_tests(app, db_connect, current_user, csrf_token)
+register_github_deploy(app, current_user, is_admin)
 
 if __name__ == "__main__":
     port = int(os.getenv("SERVER_PORT", os.getenv("PORT", "5000")))
