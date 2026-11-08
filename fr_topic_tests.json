@@ -193,6 +193,390 @@
           "marking_guide": "Examiner's marking guide (8): both ROCE = 36% (2); discount low margin/high turnover vs premium high margin/lower turnover, advertising depresses current operating margin but may generate future benefits, revaluation inflates Holt denominator and reduces ROCE without change in underlying operating performance, different assets/markets impair direct comparability (4); two focused nonfinancial or financial supporting information requests with reasons, e.g. like-for-like sales, age/condition and basis of asset valuation, cash flows, market/share and renewal costs (2)."
         }
       ]
+    },
+    {
+      "id": "fr-a1-framework-2026-11-08-a",
+      "title": "FR Part A1 • Conceptual Framework • Test A",
+      "topic": "A1 — Conceptual framework",
+      "description": "40-mark ACCA exam-standard test of the Conceptual Framework, qualitative characteristics, and accounting-policy comparability.",
+      "duration_minutes": 50,
+      "published": true,
+      "questions": [
+        {
+          "id": "a01",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Vireo Co has entered a new transaction that is not addressed by an IFRS Accounting Standard. In developing an accounting policy under IAS 8, which action is most appropriate?",
+          "options": [
+            "Choose the policy producing the highest reported profit.",
+            "Never recognise the transaction until the IASB creates a standard.",
+            "Use judgement, considering requirements for similar issues and the Conceptual Framework.",
+            "Automatically use the income tax treatment."
+          ],
+          "answer": 2,
+          "explanation": "Under IAS 8, preparers use judgement to develop policies when no specific standard applies, considering relevant IFRS requirements and Framework definitions and concepts."
+        },
+        {
+          "id": "a02",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "The Conceptual Framework implies an asset should be handled in one manner but a specifically applicable IFRS Accounting Standard requires a different treatment. What should Zephyr Co do?",
+          "options": [
+            "Use the Framework because it underpins all standards.",
+            "Apply the specific IFRS Accounting Standard.",
+            "Choose whichever treatment improves comparability with last year.",
+            "Select the Framework method unless the auditor objects."
+          ],
+          "answer": 1,
+          "explanation": "The Conceptual Framework is not a Standard and cannot override a specific IFRS Accounting Standard."
+        },
+        {
+          "id": "a03",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A company structures an economically controlling arrangement just below a rigid numerical threshold to avoid a detailed accounting requirement. Which issue does this best illustrate?",
+          "options": [
+            "Rules-based requirements may encourage technical compliance that obscures economic substance.",
+            "Principles-based approaches prohibit all numerical thresholds.",
+            "Detailed rules always eliminate all manipulation risk.",
+            "Accounting standards should disregard the terms of agreements."
+          ],
+          "answer": 0,
+          "explanation": "Rigid rules can be exploited, while a principles-based approach focuses on the transaction's economic substance."
+        },
+        {
+          "id": "a04",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A lender assessing whether to provide a large loan considers the client's financial statements and expected debt repayments. Which statement best describes the objective of general purpose financial reporting?",
+          "options": [
+            "Provide data primarily to determine corporate tax.",
+            "Guarantee that all lenders are repaid.",
+            "Provide information useful to investors, lenders and other creditors deciding whether to provide resources.",
+            "Predict next year's exact share price."
+          ],
+          "answer": 2,
+          "explanation": "General purpose financial reporting serves existing and potential investors, lenders and other creditors in resource-provision decisions."
+        },
+        {
+          "id": "a05",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "An analyst uses historical cash flow margins to predict next year's cash flows and then uses actual results to evaluate an earlier forecast. What qualities has the analyst used?",
+          "options": [
+            "Both events are only verification.",
+            "Forecasting uses predictive value; checking the prior forecast uses confirmatory value.",
+            "Forecasting is faithful representation; reviewing is materiality.",
+            "Both events are only comparability."
+          ],
+          "answer": 1,
+          "explanation": "Relevant information can have predictive and confirmatory value, sometimes simultaneously."
+        },
+        {
+          "id": "a06",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A company's board says a deliberately hidden, low-value payment to a director can never be material because it is less than 0.1% of revenue. Which response is best?",
+          "options": [
+            "Correct: only the size determines materiality.",
+            "Correct unless the payment is recurring.",
+            "Materiality is always identical for every company.",
+            "Incorrect: the nature and context of the transaction may be material even if the amount is small."
+          ],
+          "answer": 3,
+          "explanation": "Materiality is entity-specific and depends on both nature and size."
+        },
+        {
+          "id": "a07",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Sparrow Co's directors omit a significant litigation risk to avoid alarming investors. Which assessment is best?",
+          "options": [
+            "The omission undermines completeness, neutrality and relevance.",
+            "The statements are more neutral because negative information was excluded.",
+            "The omission improves timeliness.",
+            "Only understandability is affected, not faithful representation."
+          ],
+          "answer": 0,
+          "explanation": "Deliberately concealing material information damages faithful representation and relevance."
+        },
+        {
+          "id": "a08",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A rehabilitation liability is estimated using an unbiased, documented model with uncertainty explained. The final cash payment may differ from the estimate. Does that automatically violate 'free from error'?",
+          "options": [
+            "Yes, because estimates must match future outcomes exactly.",
+            "Yes, if it is based on judgement.",
+            "No, if the method is appropriate, carefully applied and the uncertainty described.",
+            "No estimate can ever be included in financial statements."
+          ],
+          "answer": 2,
+          "explanation": "Free from error refers to description and measurement process, not perfect future precision."
+        },
+        {
+          "id": "a09",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "An agreement is named a 'sale', but the company appears to retain the underlying economic risks and benefits. Which principle should guide financial reporting?",
+          "options": [
+            "Always use the agreement's title.",
+            "Record whichever treatment makes the entity look more profitable.",
+            "Faithfully represent the economic substance, applying the relevant IFRS requirements.",
+            "Ignore the transaction until the legal name is changed."
+          ],
+          "answer": 2,
+          "explanation": "Faithful representation requires reporting substance rather than mere legal form."
+        },
+        {
+          "id": "a10",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Two retailers use different IFRS-permitted inventory methods and disclose their methods consistently. Which statement about comparability is correct?",
+          "options": [
+            "Comparability is not uniformity; adequate disclosures and consistency support meaningful comparisons.",
+            "The two entities must always use identical policies regardless of IFRS permissions.",
+            "Any accounting policy choice makes financial reporting irrelevant.",
+            "Comparability means only year-to-year comparison, never comparisons between entities."
+          ],
+          "answer": 0,
+          "explanation": "Comparability does not require uniformity; consistent measurement and disclosure help assess differences."
+        },
+        {
+          "id": "a11",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A reviewer physically counts inventory and separately re-performs FIFO costing from purchase records. Which description is accurate?",
+          "options": [
+            "Counting is indirect verification, recalculating FIFO is direct verification.",
+            "Counting is direct verification; recalculating inputs and method is indirect verification.",
+            "Both are timeliness tests.",
+            "Neither constitutes verifiability."
+          ],
+          "answer": 1,
+          "explanation": "Direct verification involves observation; indirect verification checks inputs and recalculates using the method."
+        },
+        {
+          "id": "a12",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Orion Co changes a permitted inventory cost formula because it provides more relevant and reliable information. Separately, it revises a machine's remaining useful life following new evidence. Assuming no exception or transitional provision, what is the correct approach?",
+          "options": [
+            "Both changes are retrospective.",
+            "Both changes are prospective.",
+            "The useful-life revision is retrospective and the policy change is prospective.",
+            "The accounting policy change is normally retrospective; the estimate change prospective."
+          ],
+          "answer": 3,
+          "explanation": "Changes in accounting policies generally apply retrospectively, whereas changes in estimates apply prospectively."
+        },
+        {
+          "id": "a13",
+          "type": "written",
+          "marks": 8,
+          "prompt": "Riverbank Co is being evaluated by prospective lenders and investors. The directors deliberately omit information about a potentially material environmental lawsuit from its accounts and publish the annual report after the funding decisions were made. An estimate of warranty claims was made using reliable past claims data and the uncertainty was disclosed, but directors argue that any uncertainty means the estimate cannot be faithfully represented.\n\nRequired (8 marks): Discuss how the decisions and estimation issues affect relevance, materiality, faithful representation (completeness, neutrality, free from error) and timeliness. Apply each point to the scenario. Give a conclusion.",
+          "marking_guide": "8 marks: identify materiality and decision-usefulness/predictive value of environmental litigation (1–2); omission causes incomplete and biased/ nonneutral statements (2); explain free from error does not require an exact estimate, appropriate inputs/methods and disclosed uncertainty can be faithfully represented (2); late reporting undermines timeliness (1); scenario-specific conclusion and advice about correcting misleading reporting (1)."
+        },
+        {
+          "id": "a14",
+          "type": "written",
+          "marks": 8,
+          "prompt": "Meridian Co makes two changes in 20X7. First, management changes its inventory cost formula from FIFO to weighted average after evidence that the new permitted method provides more relevant and reliable information. Second, following evidence about new operating conditions, it revises the remaining useful life of plant. Directors propose treating both changes in 20X7 only, without reviewing 20X6 comparatives, and argue that policies may be changed annually to smooth profit.\n\nRequired (8 marks): (a) Evaluate the change of inventory accounting policy and the effect on comparability, including the normal treatment of comparatives. (4 marks) (b) Explain the change of useful-life estimate and correct treatment. (2 marks) (c) Discuss the directors' proposal to manipulate annual profit, referring to faithful representation and the need to follow an applicable IFRS Accounting Standard. (2 marks).",
+          "marking_guide": "8 marks: change of policy only when required or results in more relevant/reliable information (1); normally retrospective and comparative restatement subject to transitional rules/impracticability (2); comparability and disclosures (1); estimate change prospective, revised remaining depreciation, no ordinary restatement (2); profit smoothing is biased, breaches neutrality and faithful representation (1); applicable IAS 8 takes priority over general Framework principles (1)."
+        }
+      ]
+    },
+    {
+      "id": "fr-b1-1-ias16-2026-11-08-a",
+      "title": "FR Part B1.1 • IAS 16 PPE Initial Cost • Test A",
+      "topic": "B1.1 — IAS 16",
+      "description": "40-mark scenario-based IAS 16 test on PPE recognition, costs, decommissioning, self-construction and subsequent expenditure.",
+      "duration_minutes": 55,
+      "published": true,
+      "questions": [
+        {
+          "id": "b01",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Maple Co buys 20 identical machines: 19 for resale as part of its ordinary business and one to operate in its own production line for five years. How should the production machine generally be classified?",
+          "options": [
+            "Inventory under IAS 2.",
+            "Property, plant and equipment under IAS 16.",
+            "An intangible asset.",
+            "A provision."
+          ],
+          "answer": 1,
+          "explanation": "A tangible item held for use in production over more than one accounting period is PPE; machines bought for resale are inventory."
+        },
+        {
+          "id": "b02",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "One of Copper Co's items of equipment has a reliably measured purchase price, but at acquisition management has convincing evidence that no future economic benefits are probable. Can it be recognised as PPE?",
+          "options": [
+            "Yes, because an invoice exists.",
+            "Yes, whenever the item is physical.",
+            "No, because both probable benefits and reliable measurement must be met.",
+            "Yes, as long as its useful life exceeds one year."
+          ],
+          "answer": 2,
+          "explanation": "IAS 16 recognition requires both probable future economic benefits and reliable cost measurement."
+        },
+        {
+          "id": "b03",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "On acquisition, equipment has a list price of $400,000, a 5% trade discount, non-refundable import duty $20,000, delivery $8,000, installation $12,000, training $10,000 and head-office administration $7,000. What is initial PPE cost?",
+          "options": [
+            "$420,000",
+            "$437,000",
+            "$430,000",
+            "$400,000"
+          ],
+          "answer": 0,
+          "explanation": "Cost = $400,000 less $20,000 trade discount + $20,000 duty + $8,000 delivery + $12,000 installation = $420,000. Training/admin are expensed."
+        },
+        {
+          "id": "b04",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A factory constructed for the entity's own use has total recorded project costs of $800,000, including general overhead $60,000, abnormal wasted materials $20,000 and idle wages during an abnormal shutdown $25,000. What amount qualifies for capitalisation, assuming the other costs are directly attributable?",
+          "options": [
+            "$740,000",
+            "$695,000",
+            "$715,000",
+            "$800,000"
+          ],
+          "answer": 1,
+          "explanation": "Capitalize $800,000 - $60,000 - $20,000 - $25,000 = $695,000."
+        },
+        {
+          "id": "b05",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A warehouse was complete and capable of operating as intended on 1 July. It was first used on 1 September, after staff training. For a 31 December year end, when does depreciation normally begin?",
+          "options": [
+            "1 January of the next year.",
+            "1 September, the day of first actual use.",
+            "1 July, when it became available for intended use.",
+            "Only after the first sale from the warehouse."
+          ],
+          "answer": 2,
+          "explanation": "Depreciation begins when available for use in the manner intended, not when first actually used."
+        },
+        {
+          "id": "b06",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "Mine Co must dismantle a plant after two years and expects to pay $121,000. The suitable discount rate is 10%. What initial dismantling provision and related PPE cost component should be recognised?",
+          "options": [
+            "$100,000",
+            "$110,000",
+            "$121,000",
+            "$133,100"
+          ],
+          "answer": 0,
+          "explanation": "Present value = $121,000/(1.10)^2 = $100,000; capitalise it in PPE and set up a corresponding provision."
+        },
+        {
+          "id": "b07",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "The initial decommissioning provision is $100,000 and the discount rate is 10%. What are the first-year finance cost and closing provision balance (ignoring estimate revisions and payments)?",
+          "options": [
+            "Finance cost $0; provision $100,000.",
+            "Finance cost $100,000; provision $200,000.",
+            "Finance cost $10,000; provision $100,000.",
+            "Finance cost $10,000; provision $110,000."
+          ],
+          "answer": 3,
+          "explanation": "Unwinding of discount = $100,000 × 10% = $10,000 finance cost, increasing the provision to $110,000."
+        },
+        {
+          "id": "b08",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A machine has an $9,000 routine annual service and a $30,000 new component that increases output beyond its previous expected capacity. Which treatment is correct?",
+          "options": [
+            "Capitalise $39,000.",
+            "Expense $39,000.",
+            "Expense $9,000 and capitalise the qualifying $30,000 replacement, derecognising any replaced component.",
+            "Expense $30,000 and capitalise $9,000."
+          ],
+          "answer": 2,
+          "explanation": "Routine servicing is expensed, while a qualifying improvement/replacement is capitalised; any old replaced component is removed."
+        },
+        {
+          "id": "b09",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "The carrying amount of a machine component being replaced is $50,000. A new qualifying component costs $90,000. Ignoring any other depreciation, how does the replacement affect PPE?",
+          "options": [
+            "Increase PPE by $90,000 and leave the old part on the books.",
+            "Derecognise the $50,000 old component and recognise $90,000 new: net PPE increase $40,000.",
+            "Expense the new $90,000 and leave the old part.",
+            "Reduce PPE by $140,000."
+          ],
+          "answer": 1,
+          "explanation": "Under component accounting remove replaced carrying amount $50,000 and capitalise new $90,000; net change is +$40,000."
+        },
+        {
+          "id": "b10",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A legally required major safety inspection costing $75,000 allows a complex piece of equipment to operate for the next three years; the inspection meets IAS 16 recognition criteria. How is the cost normally treated?",
+          "options": [
+            "Expense immediately because it is labelled inspection.",
+            "Keep it off the balance sheet until the next inspection.",
+            "Capitalise it but never depreciate it.",
+            "Capitalise it as a component and depreciate over its inspection benefit period, removing any remaining prior-inspection component."
+          ],
+          "answer": 3,
+          "explanation": "Qualifying major inspections are capitalised and depreciated to the next inspection, with the prior inspection cost derecognised."
+        },
+        {
+          "id": "b11",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A company pays $12,000 delivery on new production equipment, $4,000 training for staff using it, and $3,000 for abnormal construction waste. Which of these additions is capitalised into PPE?",
+          "options": [
+            "Delivery $12,000 only.",
+            "Training $4,000 and delivery $12,000.",
+            "All $19,000.",
+            "None, because all were paid after ordering."
+          ],
+          "answer": 0,
+          "explanation": "Delivery is directly attributable to bringing PPE into location and condition for intended use; training and abnormal waste are expenses."
+        },
+        {
+          "id": "b12",
+          "type": "mcq",
+          "marks": 2,
+          "prompt": "A production machine has been available for use for two years. The entity spends $100,000 on ordinary repairs that merely restore original expected performance, with no separately replaced significant component. Which is appropriate?",
+          "options": [
+            "Capitalise because the amount is large.",
+            "Capitalise because repairs improve cash flow.",
+            "Expense as routine maintenance.",
+            "Capitalise and add ten years to the useful life automatically."
+          ],
+          "answer": 2,
+          "explanation": "Normal repairs maintain previously expected economic benefits and are expensed; cost magnitude alone does not justify capitalisation."
+        },
+        {
+          "id": "b13",
+          "type": "written",
+          "marks": 8,
+          "prompt": "Horizon Co constructs a warehouse for its own use. All amounts are in $000:\nLand 240; stamp duty 6; legal fees 9; site preparation 12; materials 130 (including abnormal spoiled materials 11); direct construction wages 95 (including idle time during abnormal stoppage 8); architect's fees 18; general administration 16.\n\nThe warehouse became ready for intended use on 1 July 20X8, but employees did not occupy it until 1 October 20X8.\n\nRequired (8 marks): (a) Calculate the cost to be capitalised, showing each inclusion and deduction. (4 marks) (b) Explain why abnormal waste and general administrative costs are excluded. (2 marks) (c) State when depreciation begins and why. (2 marks).",
+          "marking_guide": "8 marks: capitalised cost 240+6+9+12+130−11+95−8+18 = $491k with labelled inclusions and deductions (4); normal directly attributable vs abnormal waste and idle time and general admin expensed (2); depreciation begins 1 July 20X8 when ready, notwithstanding actual occupancy 1 October (2)."
+        },
+        {
+          "id": "b14",
+          "type": "written",
+          "marks": 8,
+          "prompt": "Ocean Co installs production equipment at a cash purchase cost of $600,000 and incurs $25,000 on required site preparation. By law it must dismantle the equipment in three years, when the expected cash payment is $133,100; an appropriate annual discount rate is 10%.\nDuring the following year Ocean also incurs $12,000 on routine servicing and $35,000 replacing a significant component to increase production capacity. Assume the new component meets the IAS 16 asset recognition requirements, but the old component's carrying amount is not provided.\n\nRequired (8 marks): (a) Calculate the initial dismantling provision at present value and total PPE cost, showing workings. (3 marks) (b) Calculate first-year interest on the provision and its closing balance, explaining the journal impact. (2 marks) (c) Explain the treatment of the servicing and replacement, including the principle for derecognising the old component. (3 marks).",
+          "marking_guide": "8 marks: PV 133,100/(1.1)^3=$100,000 (2); PPE 600,000+25,000+100,000=$725,000 (1); finance expense $10,000 and provision balance $110,000 (2); $12,000 servicing expensed, $35,000 new qualifying component capitalised and old component derecognised if carrying amount can be determined, no invented amount (3)."
+        }
+      ]
     }
   ]
 }
