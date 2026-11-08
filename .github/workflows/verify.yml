@@ -89,14 +89,17 @@ jobs:
           raw=b''.join(Path(f'fr_portal_v7.gz.part{i}').read_bytes() for i in range(4))
           html=gzip.decompress(raw).decode('utf-8')
           print('EXAM_RUNTIME_DEBUG_START')
-          for pat in [r'function\\s+[\\w$]+\\s*\\(',r'const\\s+[\\w$]+\\s*=\\s*(?:async\\s*)?\\(',r'let\\s+[\\w$]+\\s*=\\s*(?:async\\s*)?\\(']:
-              for match in re.finditer(pat,html):
-                  name=match.group(0)
-                  if re.search(r'exam|mock|exit|end|submit|finish|review|navigator|score|attempt|result|start|resume|leave|jump|goTo|question',name,re.I):
-                      print('MATCH',name[:95], 'at',match.start(), re.sub(r'\\s+',' ',html[match.start():match.start()+420])[:420])
-          for snippet in [r'onclick="[^"]*(?:exit|submit|finish|endExam|leave|mock|nav)[^"]*"',r'function\\s+(?:exitExam|submitExam|finishExam|goToQuestion|launchMock|resumeExam|endExam|openNavigator|showQuestion)\\s*\\(']:
-              for match in list(re.finditer(snippet,html,flags=re.I))[:25]:
-                  print('EXTRA',match.group(0)[:220],re.sub(r'\\s+',' ',html[match.start():match.start()+520])[:520])
+          pattern = re.compile(r'function\s+[A-Za-z_$][\w$]*\s*\(')
+          for match in pattern.finditer(html):
+              name=match.group(0)
+              if re.search(r'exam|mock|exit|end|submit|finish|review|navigator|score|attempt|result|start|resume|leave|jump|goTo|question',name,re.I):
+                  print('MATCH',name[:85], 'at',match.start(), re.sub(r'\s+',' ',html[match.start():match.start()+350])[:350])
+          for token in ['exitExam(', 'finishExam(', 'submitExam(', 'launchMock(', 'resumeExam(', 'confirmExit', 'finishMock(', 'showResults(', 'navigateQuestion(', 'currentQuestion', 'state.history.push(', 'history.push(']:
+              count=0
+              for match in re.finditer(re.escape(token),html):
+                  count+=1
+                  if count<=6: print('REFERENCE',token,'at',match.start(),re.sub(r'\s+',' ',html[max(0,match.start()-120):match.start()+180])[:300])
+              print('COUNT',token,count)
           print('EXAM_RUNTIME_DEBUG_END')
           PY
       - name: Verify served portal JavaScript syntax
