@@ -35,6 +35,30 @@ F7-only hosted practice portal for Jayakiran, built with Python/Flask for Bot-Ho
 - The GitHub Actions verification checks the question bank, authentication, complete submissions, objective scoring and topic-test JavaScript.
 - Bot-Hosting must pull the newest `main` commit (using **Pull now** or restart when **Auto-pull at restart** is enabled) for new tests to appear on the running site.
 
+## GitHub Sync from the Management panel
+
+Admins can open **Management → GitHub deployment updates** to compare the latest
+`main` commit against the running Git checkout and select **Pull latest commits & restart**.
+The button invokes Bot-Hosting's official `POST /api/v1/deployments/:id/sync` service,
+which pulls the linked repository and restarts the live Python app.
+
+**One-time setup:**
+
+1. In Bot-Hosting, open **Account → Developer** and create an API key with the
+   `deployments:write` scope. No GitHub personal access token is needed.
+2. Save it as the **private** Bot-Hosting environment variable `BOT_HOSTING_API_KEY`.
+   Never place it in GitHub, website JavaScript, or a chat message.
+3. The default deployment ID is the existing F7 website deployment. If moved or
+   recreated, set `BOT_HOSTING_DEPLOYMENT_ID` privately to its new deployment ID.
+4. Use Bot-Hosting **GitHub → Pull now** or restart once to deploy this feature.
+   Thereafter the website's Management button can request future pulls.
+
+The admin API requires the signed-in administrator account and a CSRF token.
+It never accepts a repository, branch or arbitrary command from the client.
+Pulls can interrupt in-progress tests; save work before confirming.
+Do not mark a deployment as updated until Bot-Hosting confirms the operation.
+The persistent `F7_DB_PATH` database is not altered by this feature.
+
 ## Bot-Hosting variables
 
 Set these privately on Bot-Hosting:
