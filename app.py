@@ -849,7 +849,128 @@ window.addEventListener('load', function () {
 });
 </script>
 """
-    return html.replace("</body>", patch + topic_tests_nav + "\n</body>")
+    safe_exam_ui = r"""
+<style>
+.dashboardV8 .metricCard[data-go],.dashboardV8 .progressHero[data-go],.dashboardV8 .dashPanelHead[data-go]{cursor:pointer}
+.dashboardV8 .metricCard[data-go]:after{content:"↗";position:absolute;top:10px;right:11px;font-size:16px;font-weight:bold;color:#438eb8}
+.dashboardV8 .metricCard[data-go]{position:relative;padding-right:28px}
+.dashboardV8 .progressHero[data-go]:before{content:"Open Progress ↗";position:absolute;right:21px;top:9px;color:#d7f1fe;font-size:10px}
+.dashboardV8 [data-go]:focus-visible{outline:3px solid #2b9bd2;outline-offset:3px}
+.quickTopicShortcut{display:inline-flex;border:1px solid #cadde9;background:#f1f8ff;color:#145479;padding:6px 9px;border-radius:7px;text-decoration:none;font-size:11px;font-weight:900;white-space:nowrap}
+.quickTopicShortcut:hover{background:#ddecfb}
+.examSafeQuit{font-weight:900!important;border-color:#bcd9e7!important;color:#15547a!important;background:#eaf5fc!important}
+</style>
+<script>
+(function(){
+'use strict';
+const allowedPanels=['overview','mocks','history','retests','analytics','progress','management'];
+function goPanel(panel){
+  if(!allowedPanels.includes(panel))return;
+  if(typeof showPortalView==='function')showPortalView(panel);
+}
+function decorateDashboard(){
+  const dashboard=document.querySelector('.dashboardV8');
+  if(!dashboard)return;
+  const hero=dashboard.querySelector('.progressHero');
+  if(hero){hero.dataset.go='progress';hero.setAttribute('role','link');hero.tabIndex=0;hero.title='Open My FR Progress';}
+  const sections=['history','analytics','analytics','retests'];
+  dashboard.querySelectorAll('.metricGridV8 .metricCard').forEach((card,index)=>{
+    const panel=sections[index];if(!panel)return;
+    card.dataset.go=panel;card.setAttribute('role','link');card.tabIndex=0;
+    card.title='Open '+panel.replace(/^./,s=>s.toUpperCase());
+  });
+  const headers=dashboard.querySelectorAll('.dashPanelHead');
+  if(headers[0]){
+    headers[0].dataset.go='mocks';headers[0].setAttribute('role','link');headers[0].tabIndex=0;
+    if(!headers[0].querySelector('.quickTopicShortcut')){
+      const a=document.createElement('a');a.className='quickTopicShortcut';a.href='/topic-tests';a.textContent='Topic Tests ↗';
+      a.title='Open new ACCA chapter tests';a.onclick=e=>e.stopPropagation();
+      headers[0].appendChild(a);
+    }
+  }
+  if(headers[1]){headers[1].dataset.go='history';headers[1].setAttribute('role','link');headers[1].tabIndex=0;}
+}
+document.addEventListener('click',e=>{
+  const target=e.target.closest('.dashboardV8 [data-go]');
+  if(!target||e.target.closest('button,a,input,select,textarea'))return;
+  goPanel(target.dataset.go);
+});
+document.addEventListener('keydown',e=>{
+  const target=e.target.closest('.dashboardV8 [data-go]');
+  if(target && (e.key==='Enter'||e.key===' ')&&!e.target.closest('button,a')){
+    e.preventDefault();goPanel(target.dataset.go);return;
+  }
+  if(e.ctrlKey||e.altKey||e.metaKey||!['ArrowLeft','ArrowRight'].includes(e.key))return;
+  if(e.target.closest('input,textarea,select,[contenteditable]'))return;
+  const start=document.getElementById('startScreen');
+  if(!start || !start.classList.contains('hidden'))return;
+  if(typeof state==='undefined'||!state.started||state.submitted||state.view!=='question')return;
+  if(e.key==='ArrowLeft'&&typeof prevQuestion==='function'){e.preventDefault();prevQuestion();}
+  if(e.key==='ArrowRight'&&typeof nextQuestion==='function'){e.preventDefault();nextQuestion();}
+});
+function safeExitMock(){
+  if(typeof state==='undefined'||!state.started||state.submitted){
+    if(typeof showDashboard==='function')showDashboard('overview');return;
+  }
+  if(!confirm('Save this unfinished exam and exit to Dashboard? This does NOT submit the exam or record any score. You can resume it later.'))return;
+  if(typeof persist==='function')persist();
+  if(typeof save==='function')save();
+  if(typeof closeAllWindows==='function')closeAllWindows();
+  if(typeof showDashboard==='function')showDashboard('overview');
+}
+window.safeExitMock=safeExitMock;
+function addMockControls(){
+  const left=document.getElementById('footerLeft');
+  if(!left||typeof state==='undefined'||!state.started||state.submitted)return;
+  if(!document.getElementById('mockSafeExit')){
+    const b=document.createElement('button');b.type='button';b.id='mockSafeExit';
+    b.className='footBtn examSafeQuit';b.textContent='⌂ Save & Exit to Home';
+    b.onclick=safeExitMock;left.appendChild(b);
+  }
+  const right=document.getElementById('footerRight');
+  if(right&&state.view==='question'&&state.current<32&&!document.getElementById('mockSkip')){
+    const b=document.createElement('button');b.type='button';b.id='mockSkip';b.className='footBtn';
+    b.textContent='Skip →';b.onclick=function(){if(typeof nextQuestion==='function')nextQuestion();};
+    right.appendChild(b);
+  }
+}
+function applyWrappers(){
+  if(typeof window.renderFooter==='function'&&!window.renderFooter._safeWrapped){
+    const old=window.renderFooter;
+    window.renderFooter=function(){old.apply(this,arguments);addMockControls();};
+    window.renderFooter._safeWrapped=true;
+  }
+  if(typeof window.endExam==='function'&&!window.endExam._safeWrapped){
+    const old=window.endExam;
+    window.endExam=function(){
+      if(typeof state==='undefined'||state.submitted)return;
+      const complete=(typeof currentStatus==='function')
+        ?Array.from({length:32},(_,i)=>i+1).filter(n=>currentStatus(n)==='complete').length
+        :null;
+      const status=complete===null?'Some questions may be unanswered.':complete+' of 32 questions marked complete.';
+      if(!confirm('SUBMIT MOCK FOR MARKING?\n'+status+'\nSubmitting creates a permanent scored attempt. If you only want to leave, select Cancel and use Save & Exit to Home instead.'))return;
+      old.apply(this,arguments);
+    };
+    window.endExam._safeWrapped=true;
+  }
+}
+const urlPanel=new URLSearchParams(location.search).get('panel');
+window.addEventListener('load',function(){
+  applyWrappers();
+  decorateDashboard();
+  if(urlPanel&&allowedPanels.includes(urlPanel)){
+    setTimeout(function(){goPanel(urlPanel);decorateDashboard();},0);
+  }
+  // Refresh decorative shortcuts when the current dashboard is rerendered.
+  const host=document.getElementById('portalContent');
+  if(host&&window.MutationObserver){
+    const observer=new MutationObserver(()=>{if(host.querySelector('.dashboardV8'))decorateDashboard();});
+    observer.observe(host,{childList:true});
+  }
+});
+})();
+</script>
+"""    return html.replace("</body>", patch + topic_tests_nav + safe_exam_ui + "\n</body>")
 
 @app.route("/")
 @login_required
