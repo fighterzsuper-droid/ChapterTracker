@@ -24,6 +24,17 @@ F7-only hosted practice portal for Jayakiran, built with Python/Flask for Bot-Ho
 | `/api/profile` | Signed-in profile API |
 | `/health` | Deployment/OAuth status |
 
+## Topic Tests (Chapter-Level Exams)
+
+- Sign in and open **Topic Tests** in the left navigation, or visit `/topic-tests`.
+- The **Chapter 22 C2.1 Profitability & Efficiency** test has 12 scenario MCQs and two written questions (40 marks).
+- MCQs are marked when submitted. Written responses are retained for strict tutor marking; do not treat the objective score alone as a final grade.
+- Attempts are stored in the existing persistent `F7_DB_PATH` SQLite database, separately for each signed-in user. Draft answers autosave locally in that user's browser.
+- The **Review attempt** page shows MCQ corrections and full saved written answers and allows copying a submission for external marking. Past submitted attempts remain accessible after new tests are published.
+- Future tests are **new entries with unique quiz IDs** in `fr_topic_tests.json`; never overwrite a published test with attempts. Revisions and targeted weakness retests use new IDs.
+- The GitHub Actions verification checks the question bank, authentication, complete submissions, objective scoring and topic-test JavaScript.
+- Bot-Hosting must pull the newest `main` commit (using **Pull now** or restart when **Auto-pull at restart** is enabled) for new tests to appear on the running site.
+
 ## Bot-Hosting variables
 
 Set these privately on Bot-Hosting:
